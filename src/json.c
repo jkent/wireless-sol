@@ -78,29 +78,39 @@ const struct jsontree_callback json_led_callback =
 
 static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 {
-	char buf[LAYER_NAME_MAX + 1];
 	struct layer *layer;
+	char buf[LAYER_NAME_MAX + 1];
 
 	if (path->callback_state == 0) {
-		path->putchar('{');
+		path->putchar('[');
 	}
 
 	if (path->callback_state >= LAYER_MAX) {
-		path->putchar('}');
+		path->putchar(']');
 		return 0;
 	}
 
 	layer = &flash_data.layers[path->callback_state];
 	if (!layer->name[0]) {
-		path->putchar('}');
+		path->putchar(']');
 		return 0;
 	}
 
+	path->putchar('{');
+
+	jsontree_write_string(path, "name");
+	path->putchar(':');
 	strncpy(buf, layer->name, LAYER_NAME_MAX);
 	buf[LAYER_NAME_MAX] = '\0';
 	jsontree_write_string(path, buf);
+
+	path->putchar(',');
+
+	jsontree_write_string(path, "visible");
 	path->putchar(':');
 	jsontree_write_atom(path, layer->visible ? "true" : "false");
+
+	path->putchar('}');
 
 	if (path->callback_state < LAYER_MAX - 1) {
 		layer++;
@@ -113,57 +123,44 @@ static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 	return 1;
 }
 
-static int ICACHE_FLASH_ATTR range_object_callback(struct jsontree_context *path, struct range *range)
+static void ICACHE_FLASH_ATTR emit_range_object(struct jsontree_context *path, struct range *range)
 {
-	uint16_t state = path->index[JSONTREE_MAX_DEPTH-3];
+	path->putchar('{');
 
-	if (state == 0) {
-		path->putchar('{');
-	}
+	jsontree_write_string(path, "type");
+	path->putchar(':');
+	jsontree_write_int(path, range->type);
 
-	switch (state) {
-	case 0:
-		jsontree_write_string(path, "type");
-		path->putchar(':');
-		jsontree_write_int(path, range->type);
-		break;
-	case 1:
-		jsontree_write_string(path, "lb");
-		path->putchar(':');
-		jsontree_write_int(path, range->lb);
-		break;
-	case 2:
-		jsontree_write_string(path, "ub");
-		path->putchar(':');
-		jsontree_write_int(path, range->ub);
-		break;
-	case 3:
-		jsontree_write_string(path, "value");
-		path->putchar(':');
-		jsontree_write_int(path, range->value);
-		break;
-	default:
-		path->putchar('}');
-		return 0;
-	}
+	path->putchar(',');
 
-	if (state < 3) {
-		path->putchar(',');
-	}
+	jsontree_write_string(path, "lb");
+	path->putchar(':');
+	jsontree_write_int(path, range->lb);
 
-	path->index[JSONTREE_MAX_DEPTH-3] = state + 1;
-	return 1;
+	path->putchar(',');
+
+	jsontree_write_string(path, "ub");
+	path->putchar(':');
+	jsontree_write_int(path, range->ub);
+
+	path->putchar(',');
+
+	jsontree_write_string(path, "value");
+	path->putchar(':');
+	jsontree_write_int(path, range->value);
+
+	path->putchar('}');
 }
 
 static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path, uint16_t id)
 {
+	uint8_t state = path->callback_state & 0xFF;
+	uint8_t substate = (path->callback_state >> 8) & 0xFF;
 	struct layer *layer = &flash_data.layers[id];
 	struct range *range;
-	uint16_t range_id;
 	char buf[LAYER_NAME_MAX+1];
 
 	if (path->callback_state == 0) {
-		path->index[JSONTREE_MAX_DEPTH-2] = 0;
 		if (!layer->name[0]) {
 			jsontree_write_atom(path, "null");
 			return 0;
@@ -171,7 +168,7 @@ static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path
 		path->putchar('{');
 	}
 
-	switch (path->callback_state) {
+	switch (state) {
 	case 0:
 		jsontree_write_string(path, "name");
 		path->putchar(':');
@@ -182,38 +179,41 @@ static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path
 		path->callback_state++;
 		break;
 	case 1:
-		jsontree_write_string(path, "ranges");
+		jsontree_write_string(path, "visible");
 		path->putchar(':');
-		path->putchar('[');
-		path->index[JSONTREE_MAX_DEPTH-3] = 0;
+		jsontree_write_atom(path, layer->visible ? "true" : "false");
+		path->putchar(',');
 		path->callback_state++;
 		break;
 	case 2:
-		range_id = path->index[JSONTREE_MAX_DEPTH-2];
-
-		if (range_id >= RANGE_MAX) {
-			path->putchar(']');
-			path->callback_state++;
-			return 1;
+		if (substate == 0) {
+			jsontree_write_string(path, "ranges");
+			path->putchar(':');
+			path->putchar('[');
 		}
 
-		range = &layer->ranges[range_id];
+		if (substate >= RANGE_MAX) {
+			path->putchar(']');
+			path->callback_state++;
+			break;
+		}
+
+		range = &layer->ranges[substate];
 		if (range->type == RANGE_TYPE_NONE) {
 			path->putchar(']');
 			path->callback_state++;
-			return 1;
+			break;
 		}
 
-		if (!range_object_callback(path, range)) {
-			path->index[JSONTREE_MAX_DEPTH-2] = range_id + 1;
-			path->index[JSONTREE_MAX_DEPTH-3] = 0;
-			if (range_id < RANGE_MAX - 1) {
-				range++;
-				if (range->type != RANGE_TYPE_NONE) {
-					path->putchar(',');
-				}
+		emit_range_object(path, range);
+
+		if (substate < RANGE_MAX - 1) {
+			range++;
+			if (range->type != RANGE_TYPE_NONE) {
+				path->putchar(',');
 			}
 		}
+		path->callback_state += 0x100;
 		break;
 	default:
 		path->putchar('}');
