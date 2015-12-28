@@ -1,6 +1,7 @@
 #include <esp8266.h>
 #include "data.h"
 #include "crc32.h"
+#include "led.h"
 
 #define FLASH_DATA_BLOCK0 0x3E000
 #define FLASH_DATA_BLOCK1 0x3F000

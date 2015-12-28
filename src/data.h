@@ -2,7 +2,6 @@
 #define DATA_H
 
 #include <stdint.h>
-#include "led.h"
 #include "layer.h"
 
 #define BLOCK_STATUS_SEQ (3<<0)

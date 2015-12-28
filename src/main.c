@@ -9,6 +9,7 @@
 #include "cgi.h"
 #include "data.h"
 #include "layer.h"
+#include "json.h"
 
 //#define SHOW_HEAP_USE
 
@@ -46,7 +47,8 @@ static void ICACHE_FLASH_ATTR wifi_handle_event(System_Event_t *evt)
 
 HttpdBuiltInUrl builtInUrls[] = {
 	{ "/", cgiRedirect, "/index.html" },
-	{ "/led.json", cgiLedJson, NULL },
+	{ "/led.json", cgiJson, &json_led_status_callback },
+	{ "/settings.json", cgiJson, &json_settings_callback },
 	{ "*", cgiEspFsHook, NULL },
 	{ NULL }
 };
