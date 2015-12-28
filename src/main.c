@@ -7,6 +7,8 @@
 #include "espfs.h"
 #include "webpages-espfs.h"
 #include "cgi.h"
+#include "data.h"
+#include "layer.h"
 
 //#define SHOW_HEAP_USE
 
@@ -85,13 +87,16 @@ void ICACHE_FLASH_ATTR user_init(void)
 {
 	system_update_cpu_freq(SYS_CPU_160MHZ);
 
-	uart_init(BIT_RATE_115200, BIT_RATE_115200);
-
 	gpio_init();
 	led_init();
+	data_init();
+	layer_update();
+	led_update();
+
 	button_add(4, button_down, button_up);
 	button_init();
 
+	uart_init(BIT_RATE_115200, BIT_RATE_115200);
 	printf("\nESPLED controller");
 	repl_init();
 

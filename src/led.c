@@ -1,7 +1,12 @@
 #include <esp8266.h>
 #include "led.h"
+#include "data.h"
 
-const uint8_t led_linear_map[256] = {
+uint8_t led_current[LED_MAX];
+//uint8_t led_next[LED_MAX];
+uint8_t *led_next;
+
+static const uint8_t linear_map[256] = {
 	  0,   1,   1,   1,   1,   1,   1,   1,
 	  1,   1,   1,   1,   1,   1,   1,   2,
 	  2,   2,   2,   2,   2,   2,   2,   2,
@@ -61,13 +66,19 @@ void ICACHE_FLASH_ATTR led_init(void)
 		;
 
 	led_update();
+
+	led_next = led_current;
+
+	start_time = _getCycleCount();
+	while ((_getCycleCount() - start_time) < res)
+		;
 }
 
 void led_update(void)
 {
-	unsigned char bit, byte;
-	int i, j;
-	uint32_t t0h, t1h, ttot, t, c, start_time;
+	uint8_t byte, component, bit;
+	uint16_t i;
+	uint32_t start_time, t0h, t1h, ttot, t, c;
 
 	start_time = _getCycleCount();
 
@@ -75,10 +86,10 @@ void led_update(void)
 	t1h = (1000 * system_get_cpu_freq()) / 1250; // 0.8us
 	ttot = (1000 * system_get_cpu_freq()) / 800; // 1.25us
 
-	for (i = 0; i < NUM_LEDS; i++) {
-		byte = led_linear_map[led_current[i]];
+	for (i = 0; i < flash_data.led_count; i++) {
+		byte = linear_map[led_current[i]];
 		ets_intr_lock();
-		for (j = 0; j < 3; j++) {
+		for (component = 0; component < 3; component++) {
 			for (bit = 0; bit < 8; bit++) {
 				t = (byte & (1 << (7 - bit))) ? t1h : t0h;
 				while (((c = _getCycleCount()) - start_time) < ttot)

@@ -1,6 +1,7 @@
 #include <esp8266.h>
 #include "json/jsontree.h"
 #include "led.h"
+#include "data.h"
 
 void ICACHE_FLASH_ATTR json_led_status(int (*putchar)(int))
 {
@@ -8,9 +9,9 @@ void ICACHE_FLASH_ATTR json_led_status(int (*putchar)(int))
 	json.putchar = putchar;
 
 	putchar('[');
-	for (int i = 0; i < NUM_LEDS; i++) {
+	for (int i = 0; i < flash_data.led_count; i++) {
 		jsontree_write_int(&json, led_current[i]);
-		if (i + 1 < NUM_LEDS) {
+		if (i + 1 < flash_data.led_count) {
 			putchar(',');
 		}
 	}
