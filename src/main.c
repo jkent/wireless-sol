@@ -1,5 +1,6 @@
 #include <esp8266.h>
 #include "repl.h"
+#include "led.h"
 #include "httpd.h"
 #include "httpdespfs.h"
 #include "espfs.h"
@@ -48,6 +49,10 @@ HttpdBuiltInUrl builtInUrls[] = {
 void ICACHE_FLASH_ATTR user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
+
+    gpio_init();
+    led_init();
+
     printf("\nESPLED controller");
     repl_init();
 

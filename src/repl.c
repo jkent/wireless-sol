@@ -1,5 +1,6 @@
 #include <esp8266.h>
 #include "repl.h"
+#include "led.h"
 
 #define REPL_MAXBUF 79
 
@@ -64,9 +65,25 @@ static char *ICACHE_FLASH_ATTR repl_parse_args(char **args)
 
 static void ICACHE_FLASH_ATTR repl_command_help(char *args)
 {
+    printf("\nled-set <level>");
     printf("\nwifi-connect <ssid> [password]");
     printf("\nwifi-disconnect");
     printf("\nwifi-status");
+}
+
+static void ICACHE_FLASH_ATTR repl_command_led_set(char *args)
+{
+    const char *level;
+
+    level = repl_parse_args(&args);
+
+    if (!level) {
+        printf("\nlevel is required");
+        return;
+    }
+
+    memset(led_current, atoi(level), sizeof(led_current));
+    led_update();
 }
 
 static void ICACHE_FLASH_ATTR repl_command_wifi_connect(char *args)
@@ -145,6 +162,7 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_status(char *args)
 
 static repl_command commands[] = {
     {"help",            repl_command_help            },
+    {"led-set",         repl_command_led_set         },
     {"wifi-connect",    repl_command_wifi_connect    },
     {"wifi-disconnect", repl_command_wifi_disconnect },
     {"wifi-status",     repl_command_wifi_status     },

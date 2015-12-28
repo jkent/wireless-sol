@@ -49,6 +49,8 @@ uint32 system_get_time();
 int rand(void);
 void ets_bzero(void *s, size_t n);
 void ets_delay_us(int us);
+void ets_intr_lock(void);
+void ets_intr_unlock(void);
 
 //Standard PIN_FUNC_SELECT gives a warning. Replace by a non-warning one.
 #ifdef PIN_FUNC_SELECT
