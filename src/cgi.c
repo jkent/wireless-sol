@@ -64,6 +64,7 @@ int ICACHE_FLASH_ATTR cgiJsonGet(HttpdConnData *connData)
 		}
 	}
 
+	free(json);
 	return HTTPD_CGI_DONE;
 }
 
