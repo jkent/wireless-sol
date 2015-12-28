@@ -27,7 +27,7 @@ static int ICACHE_FLASH_ATTR httpdPutchar(int c)
 	return c;
 }
 
-int ICACHE_FLASH_ATTR cgiJsonGet(HttpdConnData *connData)
+int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
 {
 	struct jsontree_context *json = (struct jsontree_context *)connData->cgiData;
 	char buf[6];
@@ -66,13 +66,4 @@ int ICACHE_FLASH_ATTR cgiJsonGet(HttpdConnData *connData)
 
 	free(json);
 	return HTTPD_CGI_DONE;
-}
-
-int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
-{
-	if (connData->requestType == HTTPD_METHOD_GET) {
-		return cgiJsonGet(connData);
-	}
-
-	return HTTPD_CGI_NOTFOUND;
 }
