@@ -1,6 +1,6 @@
 #include <esp8266.h>
 #include "httpd.h"
-#include "json/jsontree.h"
+#include "jsontree.h"
 
 #define MAX_HEAD_LEN 1024
 #define MAX_SENDBUFF_LEN 2048
@@ -16,9 +16,6 @@ static HttpdConnData *currentConnData;
 
 static int ICACHE_FLASH_ATTR httpdPutchar(int c)
 {
-	if (c == '\n') {
-		return c;
-	}
 	if (currentConnData->priv->sendBuffLen >= MAX_SENDBUFF_LEN) {
 		return -1;
 	}

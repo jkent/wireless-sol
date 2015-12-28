@@ -37,11 +37,11 @@ export USE_OPENSDK
 TARGET		= wireless-sol
 
 # which modules (subdirectories) of the project to include in compiling
-MODULES		= etslib src
+MODULES		= etslib json src
 EXTRA_INCDIR	= libesphttpd/include
 
 # libraries used in this project, mainly provided by the SDK
-LIBS		= c gcc hal phy pp net80211 lwip crypto wpa json main
+LIBS		= c gcc hal phy pp net80211 lwip crypto wpa main
 LIBS		+= esphttpd webpages-espfs
 
 # compiler flags using during compilation of source files
@@ -66,7 +66,7 @@ LD_SCRIPT	= eagle.app.v6.ld
 # various paths from the SDK used in this project
 SDK_LIBDIR	= lib
 SDK_LDDIR	= ld
-SDK_INCDIR	= include include/json
+SDK_INCDIR	= include
 
 # select which tools to use as compiler, librarian and linker
 CC		:= $(XTENSA_TOOLS_ROOT)xtensa-lx106-elf-gcc
