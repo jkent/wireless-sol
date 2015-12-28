@@ -4,8 +4,8 @@
 typedef struct repl_command repl_command;
 
 struct repl_command {
-    const char *name;
-    void (*handler)(char *args);
+	const char *name;
+	void (*handler)(char *args);
 };
 
 void ICACHE_FLASH_ATTR repl_init(void);
