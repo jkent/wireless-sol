@@ -6,7 +6,7 @@ strdup(const char *s)
 	if (s == NULL) {
 		return NULL;
 	}
-	char *new = (char *) malloc(strlen(s) + 1);
+	char *new = (char *)malloc(strlen(s) + 1);
 	if (new == NULL) {
 		return NULL;
 	}

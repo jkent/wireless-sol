@@ -36,12 +36,13 @@ void ets_timer_disarm(ETSTimer *a);
 void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
 void ets_update_cpu_frequency(int freqmhz);
 int os_printf_plus(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-void *pvPortCalloc(size_t nmemb, size_t size);
-void *pvPortRealloc(void *ptr, size_t size);
-void *pvPortMalloc(size_t xWantedSize);
-void *pvPortZalloc(size_t);
+void *pvPortCalloc(size_t size, const char *file, unsigned int lineno);
+void *pvPortRealloc(void *ptr, size_t size, const char *file,
+		unsigned int lineno);
+void *pvPortMalloc(size_t xWantedSize, const char *file, unsigned int lineno);
+void *pvPortZalloc(size_t, const char *file, unsigned int lineno);
 void uart_div_modify(int no, unsigned int freq);
-void vPortFree(void *ptr);
+void vPortFree(void *ptr, const char *file, unsigned int lineno);
 void *vPortMalloc(size_t xWantedSize);
 uint8 wifi_get_opmode(void);
 char *wifi_station_get_hostname(void);

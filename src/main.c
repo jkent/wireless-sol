@@ -1,6 +1,7 @@
 #include <esp8266.h>
 #include "repl.h"
 #include "led.h"
+#include "button.h"
 #include "httpd.h"
 #include "httpdespfs.h"
 #include "espfs.h"
@@ -43,12 +44,46 @@ static void ICACHE_FLASH_ATTR wifi_handle_event(System_Event_t *evt)
 HttpdBuiltInUrl builtInUrls[] = { { "/", cgiRedirect, "/index.html" }, { "*",
 		cgiEspFsHook, NULL }, { NULL, NULL, NULL } };
 
+os_timer_t fade_timer;
+
+static void ICACHE_FLASH_ATTR fade_timer_cb(void *arg)
+{
+	os_timer_arm(&fade_timer, 17, 1);
+
+	if (led_current[0] >= 5) {
+		led_current[0] -= 5;
+	}
+	else {
+		led_current[0] = 0;
+	}
+	memset(led_current, led_current[0], sizeof(led_current));
+	led_update();
+}
+
+static void ICACHE_FLASH_ATTR button_down(struct button_data *button)
+{
+	os_timer_disarm(&fade_timer);
+	os_timer_setfn(&fade_timer, fade_timer_cb, NULL);
+	os_timer_arm(&fade_timer, 200, 1);
+
+	led_current[0] = 255;
+	memset(led_current, led_current[0], sizeof(led_current));
+	led_update();
+}
+
+static void ICACHE_FLASH_ATTR button_up(struct button_data *button)
+{
+	os_timer_disarm(&fade_timer);
+}
+
 void ICACHE_FLASH_ATTR user_init(void)
 {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
 
 	gpio_init();
 	led_init();
+	button_add(4, button_down, button_up);
+	button_init();
 
 	printf("\nESPLED controller");
 	repl_init();

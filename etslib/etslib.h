@@ -21,11 +21,11 @@ char *ICACHE_FLASH_ATTR strdup(const char *s);
 #define strncpy ets_strncpy
 #define strlen ets_strlen
 #define strstr ets_strstr
-#define malloc pvPortMalloc
-#define zalloc pvPortZalloc
-#define calloc pvPortCalloc
-#define realloc pvPortRealloc
-#define free vPortFree
+#define malloc(s) pvPortMalloc(s, "", 0)
+#define zalloc(s) pvPortZalloc(s, "", 0)
+#define calloc(n, s) pvPortCalloc(n * s, "", 0)
+#define realloc(p, s) pvPortRealloc(p, s, "", 0)
+#define free(p) vPortFree(p, "", 0)
 #define vsnprintf ets_vsnprintf
 #define sprintf ets_sprintf
 #define vprintf uart0_vprintf
