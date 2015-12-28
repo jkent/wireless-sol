@@ -83,6 +83,8 @@ static void ICACHE_FLASH_ATTR button_up(struct button_data *button)
 
 void ICACHE_FLASH_ATTR user_init(void)
 {
+	system_update_cpu_freq(SYS_CPU_160MHZ);
+
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
 
 	gpio_init();

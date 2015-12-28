@@ -52,8 +52,6 @@ void led_update(void)
 	int i, j;
 	uint32_t t0h, t1h, ttot, t, c, start_time;
 
-	ets_intr_lock();
-
 	start_time = _getCycleCount();
 
 	t0h = (1000 * system_get_cpu_freq()) / 2500; // 0.4us
@@ -62,6 +60,7 @@ void led_update(void)
 
 	for (i = 0; i < NUM_LEDS; i++) {
 		byte = led_linear_map[led_current[i]];
+		ets_intr_lock();
 		for (j = 0; j < 3; j++) {
 			for (bit = 0; bit < 8; bit++) {
 				t = (byte & (1 << (7 - bit))) ? t1h : t0h;
@@ -74,7 +73,6 @@ void led_update(void)
 				GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, 1 << 5);
 			}
 		}
+		ets_intr_unlock();
 	}
-
-	ets_intr_unlock();
 }
