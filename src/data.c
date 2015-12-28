@@ -32,7 +32,8 @@ static bool ICACHE_FLASH_ATTR load_block(uint8_t block)
 		flash_data.block_status |= BLOCK_STATUS_NUM;
 	}
 
-	os_printf("data loaded, seq %d, block %d\n", flash_data.block_status & BLOCK_STATUS_SEQ, block);
+	os_printf("data loaded, seq %d, block %d\n",
+			flash_data.block_status & BLOCK_STATUS_SEQ, block);
 
 	return true;
 }

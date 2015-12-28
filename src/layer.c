@@ -11,8 +11,10 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 		if (range->type == RANGE_TYPE_NONE) {
 			break;
 		}
-		range->lb = (range->lb < flash_data.led_count) ? range->lb : flash_data.led_count - 1;
-		range->ub = (range->ub < flash_data.led_count) ? range->ub : flash_data.led_count - 1;
+		range->lb =	(range->lb < flash_data.led_count) ?
+				range->lb : flash_data.led_count - 1;
+		range->ub = (range->ub < flash_data.led_count) ?
+				range->ub : flash_data.led_count - 1;
 		if (range->lb > range->ub) {
 			uint16_t tmp = range->lb;
 			range->lb = range->ub;
@@ -42,8 +44,10 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 		if (range->type != RANGE_TYPE_COPY) {
 			continue;
 		}
-		range->value = (range->value < flash_data.led_count) ? range->value : flash_data.led_count - 1;
-		memset(led_next + range->lb, led_next[range->value], range->ub - range->lb + 1);
+		range->value = (range->value < flash_data.led_count) ?
+				range->value : flash_data.led_count - 1;
+		memset(led_next + range->lb, led_next[range->value],
+				range->ub - range->lb + 1);
 	}
 
 	/* apply RANGE_TYPE_TAPER */
@@ -56,7 +60,8 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 			continue;
 		}
 		uint8_t start = (range->lb - 1 < 0) ? 0 : led_next[range->lb - 1];
-		uint8_t end = (range->ub + 1 >= flash_data.led_count) ? 0 : led_next[range->ub + 1];
+		uint8_t end = (range->ub + 1 >= flash_data.led_count) ?
+				0 : led_next[range->ub + 1];
 		int16_t delta = (end - start) * 100 / (range->ub - range->lb + 2);
 		uint16_t value = start * 100 + 50;
 		for (uint16_t j = range->lb; j <= range->ub; j++) {

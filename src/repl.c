@@ -190,16 +190,16 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_status(char *args)
 }
 
 static repl_command commands[] = {
-		{ "data-load", repl_command_data_load },
-		{ "data-save", repl_command_data_save },
-		{ "data-test", repl_command_data_test },
-		{ "help", repl_command_help },
-		{ "layer-update", repl_command_layer_update },
-		{ "led-set", repl_command_led_set },
-		{ "wifi-connect", repl_command_wifi_connect },
-		{ "wifi-disconnect", repl_command_wifi_disconnect },
-		{ "wifi-status", repl_command_wifi_status },
-		{ NULL } };
+	{ "data-load", repl_command_data_load },
+	{ "data-save", repl_command_data_save },
+	{ "data-test", repl_command_data_test },
+	{ "help", repl_command_help },
+	{ "layer-update", repl_command_layer_update },
+	{ "led-set", repl_command_led_set },
+	{ "wifi-connect", repl_command_wifi_connect },
+	{ "wifi-disconnect", repl_command_wifi_disconnect },
+	{ "wifi-status", repl_command_wifi_status },
+	{ NULL } };
 
 static void ICACHE_FLASH_ATTR repl_process_buf(void)
 {

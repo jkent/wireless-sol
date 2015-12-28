@@ -16,6 +16,7 @@ int ICACHE_FLASH_ATTR httpdPutchar(int c)
 	if (current_conn->priv->sendBuffLen >= MAX_SENDBUFF_LEN) {
 		return -1;
 	}
-	*(current_conn->priv->sendBuff + current_conn->priv->sendBuffLen++) = (char)c;
+	*(current_conn->priv->sendBuff + current_conn->priv->sendBuffLen++) =
+			(char)c;
 	return c;
 }
