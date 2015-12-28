@@ -10,7 +10,9 @@ static inline uint32_t _getCycleCount(void)
 
 void ICACHE_FLASH_ATTR led_init(void)
 {
-	uint32_t start_time;
+	uint32_t res, start_time;
+
+	res = (1000 * system_get_cpu_freq()) / 20; // 50us
 
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO5_U);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
@@ -21,7 +23,7 @@ void ICACHE_FLASH_ATTR led_init(void)
 	led_update();
 
 	start_time = _getCycleCount();
-	while ((_getCycleCount() - start_time) < 4000)
+	while ((_getCycleCount() - start_time) < res)
 		;
 
 	led_update();
