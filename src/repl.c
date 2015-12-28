@@ -223,16 +223,16 @@ void ICACHE_FLASH_ATTR repl_process_char(char c)
 		if (repl_buflen > 0) {
 			repl_buflen--;
 			repl_buf[repl_buflen] = '\0';
-			putchar('\b');
-			putchar(' ');
-			putchar('\b');
+			uart0_putchar('\b');
+			uart0_putchar(' ');
+			uart0_putchar('\b');
 		}
 	}
 	else if (c >= 32 && c < 127) {
 		if (repl_buflen < REPL_MAXBUF - 1) {
 			repl_buf[repl_buflen++] = c;
 			repl_buf[repl_buflen] = '\0';
-			putchar(c);
+			uart0_putchar(c);
 		}
 	}
 	else if (c == '\r') {

@@ -32,7 +32,6 @@ char *ICACHE_FLASH_ATTR strdup(const char *s);
 #define printf(format, ...) \
 	uart0_printf(format, ##__VA_ARGS__)
 #undef putchar
-#define putchar uart0_putchar
 #define usleep ets_delay_us
 
 #endif /* ETSLIB_H */

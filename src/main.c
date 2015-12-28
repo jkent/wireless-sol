@@ -6,6 +6,7 @@
 #include "httpdespfs.h"
 #include "espfs.h"
 #include "webpages-espfs.h"
+#include "cgi.h"
 
 //#define SHOW_HEAP_USE
 
@@ -41,8 +42,12 @@ static void ICACHE_FLASH_ATTR wifi_handle_event(System_Event_t *evt)
 	}
 }
 
-HttpdBuiltInUrl builtInUrls[] = { { "/", cgiRedirect, "/index.html" }, { "*",
-		cgiEspFsHook, NULL }, { NULL, NULL, NULL } };
+HttpdBuiltInUrl builtInUrls[] = {
+	{ "/", cgiRedirect, "/index.html" },
+	{ "/led.json", cgiLedJson, NULL },
+	{ "*", cgiEspFsHook, NULL },
+	{ NULL }
+};
 
 os_timer_t fade_timer;
 
@@ -98,7 +103,6 @@ void ICACHE_FLASH_ATTR user_init(void)
 	os_timer_setfn(&prHeapTimer, prHeapTimerCb, NULL);
 	os_timer_arm(&prHeapTimer, 3000, 1);
 #endif
-
 }
 
 #ifndef USE_OPENSDK

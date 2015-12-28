@@ -41,7 +41,7 @@ MODULES		= etslib src
 EXTRA_INCDIR	= libesphttpd/include
 
 # libraries used in this project, mainly provided by the SDK
-LIBS		= c gcc hal phy pp net80211 lwip crypto wpa main
+LIBS		= c gcc hal phy pp net80211 lwip crypto wpa json main
 LIBS		+= esphttpd webpages-espfs
 
 # compiler flags using during compilation of source files
