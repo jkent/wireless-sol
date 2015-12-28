@@ -7,16 +7,15 @@
 #define LAYER_NAME_MAX 16
 #define LAYER_MAX 8
 
-enum range_type {
+enum {
 	RANGE_TYPE_NONE,
 	RANGE_TYPE_SET,
 	RANGE_TYPE_COPY,
 	RANGE_TYPE_TAPER,
-	RANGE_TYPE_MAX
 };
 
 struct range {
-	enum range_type type;
+	uint8_t type;
 	uint16_t lb;
 	uint16_t ub;
 	uint16_t value;

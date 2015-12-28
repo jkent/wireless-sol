@@ -68,8 +68,8 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 
 void ICACHE_FLASH_ATTR layer_update(void)
 {
-	flash_data.led_count = (flash_data.led_count < LED_MAX) ? flash_data.led_count : LED_MAX;
-	memset(led_next, flash_data.layer_background, flash_data.led_count);
+	//flash_data.led_count = (flash_data.led_count < LED_MAX) ? flash_data.led_count : LED_MAX;
+	memset(led_next, flash_data.background, flash_data.led_count);
 
 	for (uint8_t i = 0; i < LAYER_MAX; i++) {
 		struct layer *layer = &flash_data.layers[i];

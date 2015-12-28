@@ -3,8 +3,7 @@
 #include "data.h"
 
 uint8_t led_current[LED_MAX];
-//uint8_t led_next[LED_MAX];
-uint8_t *led_next;
+uint8_t led_next[LED_MAX];
 
 static const uint8_t linear_map[256] = {
 	  0,   1,   1,   1,   1,   1,   1,   1,
@@ -66,12 +65,6 @@ void ICACHE_FLASH_ATTR led_init(void)
 		;
 
 	led_update();
-
-	led_next = led_current;
-
-	start_time = _getCycleCount();
-	while ((_getCycleCount() - start_time) < res)
-		;
 }
 
 void led_update(void)
