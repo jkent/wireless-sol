@@ -1,6 +1,6 @@
 <img align="left" src="https://raw.githubusercontent.com/jkent/wireless-sol/master/html/images/logo.png" />
 # wireless-sol</h1>
-A smart LED controller for white APA104/WS2812 LEDs.
+A smart LED controller for white APA104/WS2812 LEDs for the ESP8266.
 
 ## Building instructions
 
@@ -14,7 +14,7 @@ Otherwise you'll need to set the paths of the SDK and toolchain to use manually:
     SDK_BASE    := /path/to/esp_iot_sdk_v1.1.2
     ESPTOOL     := /path/to/esptool.py
     PATH        := /path/to/xtensa-lx106-elf/bin:$(PATH)
-    USE_OPENSDK := 0
+    USE_OPENSDK := no
 
 Additional settings you may want to change in your `Makefile.local`:
 

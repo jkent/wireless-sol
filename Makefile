@@ -30,7 +30,7 @@ ESPPORT		?= /dev/ttyUSB0
 ESPBAUD		?= 460800
 
 # using opensdk
-USE_OPENSDK	?= 1
+USE_OPENSDK	?= yes
 export USE_OPENSDK
 
 # name for the target project
@@ -50,7 +50,7 @@ CFLAGS		= -Os -ggdb -std=gnu99 -Werror -Wpointer-arith -Wundef -Wall \
 		-mtext-section-literals  -D__ets__ -DICACHE_FLASH \
 		-Wno-address
 
-ifeq ($(USE_OPENSDK),1)
+ifeq ("$(USE_OPENSDK)","yes")
 CFLAGS		+= -DUSE_OPENSDK
 else
 CFLAGS		+= -D_STDINT_H
