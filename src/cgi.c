@@ -30,6 +30,7 @@ static int ICACHE_FLASH_ATTR httpdPutchar(int c)
 int ICACHE_FLASH_ATTR cgiJsonGet(HttpdConnData *connData)
 {
 	struct jsontree_context *json = (struct jsontree_context *)connData->cgiData;
+	char buf[6];
 
 	if (connData->conn == NULL) {
 		if (json) {
@@ -43,19 +44,27 @@ int ICACHE_FLASH_ATTR cgiJsonGet(HttpdConnData *connData)
 	if (json == NULL) {
 		json = malloc(sizeof(struct jsontree_context));
 		jsontree_setup(json, (struct jsontree_value *)connData->cgiArg, httpdPutchar);
+
+		if (httpdFindArg(connData->getArgs, "id", buf, sizeof(buf)) > 0) {
+			json->index[JSONTREE_MAX_DEPTH - 1] = atoi(buf);
+		}
+		else {
+			json->index[JSONTREE_MAX_DEPTH - 1] = 65535;
+		}
+
 		httpdStartResponse(connData, 200);
 		httpdHeader(connData, "Content-Type", "application/json");
 		httpdEndHeaders(connData);
 		connData->cgiData = json;
 	}
 
-	while (connData->priv->sendBuffLen < MAX_SENDBUFF_LEN - (MAX_SENDBUFF_LEN / 4)) {
-		if (!jsontree_print_next(json) || json->path > json->depth) {
-			return HTTPD_CGI_DONE;
+	while (jsontree_print_next(json) && json->path <= json->depth) {
+		if (connData->priv->sendBuffLen > MAX_SENDBUFF_LEN - (MAX_SENDBUFF_LEN / 4)) {
+			return HTTPD_CGI_MORE;
 		}
 	}
 
-	return HTTPD_CGI_MORE;
+	return HTTPD_CGI_DONE;
 }
 
 int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
