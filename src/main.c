@@ -49,6 +49,7 @@ HttpdBuiltInUrl builtInUrls[] = {
 	{ "/", cgiRedirect, "/index.html" },
 	{ "/cgi/layer.json", cgiJson, &json_layer_callback },
 	{ "/cgi/led.json", cgiJson, &json_led_callback },
+	{ "/cgi/rpc", cgiRpc, NULL},
 	{ "/cgi/settings.json", cgiJson, &json_settings_callback },
 	{ "*", cgiEspFsHook, NULL },
 	{ NULL }

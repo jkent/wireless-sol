@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+
+<body>
+
+
+
+<script type="text/javascript">
+function do_post() {
+	var send = $("#json_send").val();
+
+	$.post("/cgi/rpc", $("#json_send").val(), function (data, textStatus, jqXHR) {
+			$("#json_recv").val(data);
+		}, "text");
+
+}
+
+</script>
+
+<textarea id="json_send" rows="10" cols="80">
+[
+ [{"path":"layer","action":"enable"},"lcd"],
+ [{"path":"layer","action":"disable"},"lcd"]
+]
+</textarea>
+<textarea id="json_recv" rows="10" cols="80"></textarea>
+<br />
+<button onclick="do_post();">POST</button>
+
+</body>
+
+</html>

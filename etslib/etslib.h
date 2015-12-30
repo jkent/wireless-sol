@@ -12,6 +12,7 @@ char *ICACHE_FLASH_ATTR strdup(const char *s);
 #define bzero ets_bzero
 #define memcmp ets_memcmp
 #define memcpy ets_memcpy
+#define memmove ets_memmove
 #define memset ets_memset
 #define strchr ets_strchr
 #define strrchr ets_strrchr
