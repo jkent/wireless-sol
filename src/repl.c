@@ -127,7 +127,7 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_connect(char *args)
 		return;
 	}
 
-	bzero(&stationConf, sizeof(stationConf));
+	memset(&stationConf, 0, sizeof(stationConf));
 
 	strncpy((char *)&stationConf.ssid, ssid, sizeof(stationConf.ssid));
 	if (password) {
@@ -147,7 +147,7 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_disconnect(char *args)
 {
 	struct station_config stationConf;
 
-	bzero(&stationConf, sizeof(stationConf));
+	memset(&stationConf, 0, sizeof(stationConf));
 
 	wifi_set_opmode(STATION_MODE);
 	wifi_station_set_config(&stationConf);
