@@ -23,10 +23,10 @@ struct range {
 
 struct layer {
 	char name[LAYER_NAME_MAX];
-	bool visible;
 	struct range ranges[RANGE_MAX];
 };
 
 void ICACHE_FLASH_ATTR layer_update(void);
+int8_t ICACHE_FLASH_ATTR layer_find(const char *name);
 
 #endif /* LAYER_H */

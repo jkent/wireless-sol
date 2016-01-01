@@ -10,10 +10,16 @@
 
 struct flash_data {
 	uint32_t block_status;
+
+	/* configuration */
 	uint16_t led_count;
+	struct layer layers[LAYER_MAX];
+
+	/* status */
 	uint8_t led_mode;
 	uint8_t background;
-	struct layer layers[LAYER_MAX];
+	uint16_t layer_state;
+
 	uint32_t crc;
 };
 

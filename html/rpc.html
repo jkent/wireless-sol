@@ -8,29 +8,25 @@
 
 <body>
 
-
-
 <script type="text/javascript">
 function do_post() {
+	$("#json_status").text("waiting");
 	var send = $("#json_send").val();
-
-	$.post("/cgi/rpc", $("#json_send").val(), function (data, textStatus, jqXHR) {
-			$("#json_recv").val(data);
-		}, "text");
-
+	$.post("/cgi/rpc", $("#json_send").val(), function(data, textStatus, jqXHR) {
+		$("#json_status").text(data);
+	}, "text").fail(function() {
+		$("#json_status").text("error");
+	});
 }
-
 </script>
 
+JSON:<br />
 <textarea id="json_send" rows="10" cols="80">
-[
- [{"path":"layer","action":"enable"},"lcd"],
- [{"path":"layer","action":"disable"},"lcd"]
-]
-</textarea>
-<textarea id="json_recv" rows="10" cols="80"></textarea>
+[[{"path":"layer","action":"background"},100]]
+</textarea><br />
+<button onclick="do_post();">POST</button><br />
 <br />
-<button onclick="do_post();">POST</button>
+Result: <span id="json_status" />?<br />
 
 </body>
 

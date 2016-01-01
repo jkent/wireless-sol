@@ -1,9 +1,11 @@
 #include <esp8266.h>
+#include "layer.h"
 #include "led.h"
 #include "data.h"
 
-uint8_t led_current[LED_MAX];
-uint8_t led_next[LED_MAX];
+bool led_update_required = false;
+uint8_t led_next[LED_MAX] = {0};
+uint8_t led_current[LED_MAX] = {0};
 
 static const uint8_t linear_map[256] = {
 	  0,   1,   1,   1,   1,   1,   1,   1,
@@ -50,20 +52,28 @@ void ICACHE_FLASH_ATTR led_init(void)
 {
 	uint32_t res, start_time;
 
-	res = (1000 * system_get_cpu_freq()) / 20; // 50us
-
+	/* Setup GPIO */
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO5_U);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
 	GPIO_OUTPUT_SET(5, 0);
 
-	bzero(led_current, sizeof(led_current));
+	/* Init data */
+	if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
+		layer_update();
+		memcpy(led_current, led_next, flash_data.led_count);
+	} else {
+		memset(led_current, 0, flash_data.led_count);
+		flash_data.led_mode = LED_MODE_OFF;
+	}
 
+	/* Reset LEDs */
 	led_update();
-
 	start_time = _getCycleCount();
+	res = (1000 * system_get_cpu_freq()) / 20; // 50us
 	while ((_getCycleCount() - start_time) < res)
 		;
 
+	/* Set LEDs */
 	led_update();
 }
 

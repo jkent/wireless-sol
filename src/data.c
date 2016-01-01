@@ -112,14 +112,11 @@ void ICACHE_FLASH_ATTR data_test(void)
 {
 	memset(&flash_data, 0, sizeof(flash_data));
 
+	/* configuration */
 	flash_data.led_count = 120;
-	flash_data.led_mode = LED_MODE_LAYER;
-
-	flash_data.background = 255;
 
 	struct layer *layer = flash_data.layers;
 	strcpy(layer->name, "ends");
-	layer->visible = true;
 	layer->ranges[0].type = RANGE_TYPE_TAPER;
 	layer->ranges[0].lb = 0;
 	layer->ranges[0].ub = 14;
@@ -129,7 +126,6 @@ void ICACHE_FLASH_ATTR data_test(void)
 
 	layer++;
 	strcpy(layer->name, "lcd");
-	layer->visible = true;
 	layer->ranges[0].type = RANGE_TYPE_SET;
 	layer->ranges[0].lb = 0;
 	layer->ranges[0].ub = 39;
@@ -140,7 +136,6 @@ void ICACHE_FLASH_ATTR data_test(void)
 
 	layer++;
 	strcpy(layer->name, "taper");
-	layer->visible = false;
 	layer->ranges[0].type = RANGE_TYPE_SET;
 	layer->ranges[0].lb = 0;
 	layer->ranges[0].ub = 0;
@@ -152,4 +147,9 @@ void ICACHE_FLASH_ATTR data_test(void)
 	layer->ranges[2].lb = 119;
 	layer->ranges[2].ub = 119;
 	layer->ranges[2].value = 255;
+
+	/* status */
+	flash_data.led_mode = LED_MODE_LAYER;
+	flash_data.background = 255;
+	flash_data.layer_state = 0x0003;
 }

@@ -3,6 +3,8 @@
 #include "jsontree.h"
 #include "jsonparse.h"
 #include "rpc.h"
+#include "led.h"
+#include "data.h"
 
 #define MAX_HEAD_LEN 1024
 #define MAX_POST 1024
@@ -21,9 +23,9 @@ struct HttpdPriv {
 struct RpcData {
 	struct jsonparse_state state;
 	int buffLen;
-	char buff[RPC_MAX_BUFF + 1];
+	char buff[RPC_MAX_BUFF];
 	uint8_t depth;
-	uint8_t status;
+	int8_t status;
 };
 
 static HttpdConnData *currentConnData;
@@ -36,14 +38,6 @@ static int ICACHE_FLASH_ATTR httpdPutchar(int c)
 	*(currentConnData->priv->sendBuff + currentConnData->priv->sendBuffLen++) =
 			(char)c;
 	return c;
-}
-
-int ICACHE_FLASH_ATTR myHttpdSend(HttpdConnData *conn, const char *data, int len) {
-	if (len<0) len=strlen(data);
-	if (conn->priv->sendBuffLen+len>MAX_SENDBUFF_LEN) return 0;
-	os_memcpy(conn->priv->sendBuff+conn->priv->sendBuffLen, data, len);
-	conn->priv->sendBuffLen+=len;
-	return 1;
 }
 
 int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
@@ -90,14 +84,11 @@ int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
 int ICACHE_FLASH_ATTR cgiRpc(HttpdConnData *connData)
 {
 	struct RpcData *rpc = (struct RpcData *)connData->cgiPrivData;
-	int nbytes;
+	int nbytes, status;
 	char type;
 
 	if (connData->conn == NULL) {
-		if (rpc) {
-			free(rpc);
-		}
-		return HTTPD_CGI_DONE;
+		goto done;
 	}
 
 	if (connData->requestType != HTTPD_METHOD_POST) {
@@ -112,17 +103,17 @@ int ICACHE_FLASH_ATTR cgiRpc(HttpdConnData *connData)
 		jsonparse_setup(&rpc->state, rpc->buff, MAX_POST);
 		rpc->buffLen = 0;
 		rpc->depth = 0;
-		rpc->status = 1;
+		rpc->status = RPC_OK;
 
 		connData->cgiPrivData = rpc;
 	}
 
-	if (rpc->status < 0) {
-		goto done;
+	if (rpc->status < RPC_OK) {
+		goto finish;
 	}
 
 	while (true) {
-		nbytes = RPC_MAX_BUFF - rpc->buffLen;
+		nbytes = RPC_MAX_BUFF - rpc->buffLen - 1;
 		nbytes = connData->post->buffLen < nbytes ? connData->post->buffLen : nbytes;
 		memcpy(&rpc->buff[rpc->buffLen], connData->post->buff, nbytes);
 		rpc->buffLen += nbytes;
@@ -141,16 +132,19 @@ int ICACHE_FLASH_ATTR cgiRpc(HttpdConnData *connData)
 			} else if (type == '[') {
 				rpc->depth = rpc->state.depth;
 			} else {
-				rpc->status = -1;
-				goto done;
+				rpc->status = RPC_ERROR_PARSE;
+				goto finish;
 			}
-			if (!rpc_parse(&rpc->state)) {
-				rpc->status = 0;
+			if ((status = rpc_parse(&rpc->state)) != RPC_OK) {
+				rpc->status = status;
+				if (status < RPC_OK) {
+					goto finish;
+				}
 			}
 			while (rpc->state.depth > rpc->depth) {
 				if (!jsonparse_next(&rpc->state)) {
-					rpc->status = -1;
-					goto done;
+					rpc->status = RPC_ERROR_PARSE;
+					goto finish;
 				}
 			}
 		}
@@ -169,38 +163,58 @@ int ICACHE_FLASH_ATTR cgiRpc(HttpdConnData *connData)
 			rpc->depth = rpc->state.depth;
 		} else {
 			if (rpc->state.error != JSON_ERROR_OK) {
-				rpc->status = -1;
+				rpc->status = RPC_ERROR_PARSE;
 			}
-			goto done;
+			goto finish;
 		}
-		if (!rpc_parse(&rpc->state)) {
-			rpc->status = 0;
+		if ((status = rpc_parse(&rpc->state)) != RPC_OK) {
+			rpc->status = status;
+			if (status < RPC_OK) {
+				goto finish;
+			}
 		}
 		while (rpc->state.depth > rpc->depth) {
 			if (!jsonparse_next(&rpc->state)) {
-				rpc->status = -1;
-				goto done;
+				rpc->status = RPC_ERROR_PARSE;
+				goto finish;
 			}
 		}
 	}
 
-done:
+finish:
 	if (connData->post->received < connData->post->len) {
 		return HTTPD_CGI_MORE;
+	}
+
+	if (rpc->status < RPC_OK) {
+		httpdStartResponse(connData, 500);
+		httpdHeader(connData, "Content-Type", "text/html");
+		httpdEndHeaders(connData);
+		goto done;
 	}
 
 	httpdStartResponse(connData, 200);
 	httpdHeader(connData, "Content-Type", "application/json");
 	httpdEndHeaders(connData);
+	httpdSend(connData, rpc->status == RPC_OK ? "true" : "false", -1);
 
-	if (rpc->status > 0) {
-		httpdSend(connData, "true", -1);
-	} else if (rpc->status == 0) {
-		httpdSend(connData, "false", -1);
-	} else {
-		httpdSend(connData, "null", -1);
+	if (led_update_required) {
+		led_update_required = false;
+		if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
+			memset(led_next, 0, flash_data.led_count);
+		} else if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
+			layer_update();
+		}
+
+		if (0 && (flash_data.led_mode & LED_MODE_FADE)) {
+			/* TODO: implement & start fade timer */
+		} else {
+			memcpy(led_current, led_next, flash_data.led_count);
+			led_update();
+		}
 	}
 
+done:
 	free(rpc);
 	connData->cgiPrivData = NULL;
 	return HTTPD_CGI_DONE;

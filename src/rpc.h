@@ -5,12 +5,16 @@
 #include "jsonparse.h"
 #include <stdbool.h>
 
+#define RPC_ERROR_PARSE -1
+#define RPC_OK 0
+#define RPC_FAIL 1
+
 struct rpc_handler {
 	const char *path;
 	const char *action;
-	bool (*func)(struct jsonparse_state *state, const char *action);
+	int (*func)(struct jsonparse_state *state, const char *action);
 };
 
-bool ICACHE_FLASH_ATTR rpc_parse(struct jsonparse_state *state);
+int ICACHE_FLASH_ATTR rpc_parse(struct jsonparse_state *state);
 
 #endif /* RPC_H */
