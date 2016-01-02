@@ -95,14 +95,14 @@ int8_t ICACHE_FLASH_ATTR layer_find(const char *name)
 		if (!layer->name[0]) {
 			break;
 		}
-		if (strcmp(layer->name, name) == 0) {
+		if (strncmp(layer->name, name, sizeof(layer->name)) == 0) {
 			return i;
 		}
 	}
 	return -1;
 }
 
-static uint8_t ICACHE_FLASH_ATTR layer_count(void)
+uint8_t ICACHE_FLASH_ATTR layer_count(void)
 {
 	for (uint8_t i = 0; i < LAYER_MAX; i++) {
 		struct layer *layer = &flash_data.layers[i];
