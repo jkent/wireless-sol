@@ -51,6 +51,62 @@ static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state,
 	return RPC_OK;
 }
 
+static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	struct layer layer;
+	int id = -1;
+	char type;
+
+	memset(&layer, 0, sizeof(layer));
+
+	if (jsonparse_next(state) != '{') {
+		os_printf("0\n");
+		return RPC_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			os_printf("1\n");
+			return RPC_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "name") == 0 && type == '"') {
+			jsonparse_copy_value(state, name, sizeof(name));
+			strncpy(layer.name, name, sizeof(layer.name));
+		} else if (strcmp(name, "id") == 0 && type == '0') {
+			id = jsonparse_get_value_as_int(state);
+		} else {
+			os_printf("2\n");
+			return RPC_ERROR_PARSE;
+		}
+	}
+
+	if (layer.name[0] == '\0') {
+		return RPC_FAIL;
+	}
+
+	if (layer_find(layer.name) >= 0) {
+		return RPC_FAIL;
+	}
+
+	if (id < 0) {
+		id = layer_count();
+	}
+
+	if (!layer_insert(id, &layer)) {
+		return RPC_FAIL;
+	}
+
+	return RPC_OK;
+}
+
 static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, const char *action)
 {
 	char name[LAYER_NAME_MAX + 1];
@@ -91,6 +147,100 @@ static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, c
 	}
 
 	rpc_update = true;
+	return RPC_OK;
+}
+
+static int ICACHE_FLASH_ATTR layer_remove_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	int id = -1;
+	char type;
+
+	if (jsonparse_next(state) != '{') {
+		return RPC_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			return RPC_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "name") == 0 && type == '"') {
+			jsonparse_copy_value(state, name, sizeof(name));
+			id = layer_find(name);
+		} else if (strcmp(name, "id") == 0 && type == '0') {
+			id = jsonparse_get_value_as_int(state);
+		} else {
+			return RPC_ERROR_PARSE;
+		}
+	}
+
+	if (!layer_remove(id, NULL)) {
+		return RPC_FAIL;
+	}
+
+	rpc_update = true;
+	return RPC_OK;
+}
+
+static int ICACHE_FLASH_ATTR layer_rename_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	char new[LAYER_NAME_MAX + 1];
+	int id = -1;
+	char type;
+	struct layer *layer;
+
+	new[0] = '\0';
+
+	if (jsonparse_next(state) != '{') {
+		return RPC_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			return RPC_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "old") == 0 && type == '"') {
+			jsonparse_copy_value(state, name, sizeof(name));
+			id = layer_find(name);
+		} else if (strcmp(name, "id") == 0 && type == '0') {
+			id = jsonparse_get_value_as_int(state);
+		} else if (strcmp(name, "new") == 0 && type == '"') {
+			jsonparse_copy_value(state, new, sizeof(new));
+		} else {
+			return RPC_ERROR_PARSE;
+		}
+	}
+
+	if (id < 0 || id >= layer_count() || new[0] == '\0') {
+		return RPC_FAIL;
+	}
+
+	layer = &flash_data.layers[id];
+
+	if (strcmp(layer->name, new) == 0) {
+		return RPC_OK;
+	}
+
+	if (layer_find(new) >= 0) {
+		return RPC_FAIL;
+	}
+
+	strncpy(layer->name, new, sizeof(layer->name));
 	return RPC_OK;
 }
 
@@ -246,7 +396,10 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 static struct rpc_handler handlers[] = {
 		{"layer", "disable", layer_enable_handler},
 		{"layer", "enable", layer_enable_handler},
+		{"layer", "insert", layer_insert_handler},
 		{"layer", "move", layer_move_handler},
+		{"layer", "remove", layer_remove_handler},
+		{"layer", "rename", layer_rename_handler},
 		{"layer/background", "set", layer_background_set_handler},
 		{"led", "set", led_set_handler},
 		{"led/mode", "set", led_mode_set_handler},
