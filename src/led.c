@@ -3,7 +3,6 @@
 #include "led.h"
 #include "data.h"
 
-bool led_update_required = false;
 uint8_t led_next[LED_MAX] = {0};
 uint8_t led_current[LED_MAX] = {0};
 

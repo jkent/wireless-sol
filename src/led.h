@@ -14,7 +14,6 @@ enum {
 	LED_MODE_SET_FADE,
 };
 
-extern bool led_update_required;
 extern uint8_t led_next[LED_MAX];
 extern uint8_t led_current[LED_MAX];
 

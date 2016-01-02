@@ -28,5 +28,8 @@ struct layer {
 
 void ICACHE_FLASH_ATTR layer_update(void);
 int8_t ICACHE_FLASH_ATTR layer_find(const char *name);
+bool ICACHE_FLASH_ATTR layer_remove(uint8_t id, struct layer *layer);
+bool ICACHE_FLASH_ATTR layer_insert(uint8_t id, struct layer *layer);
+bool ICACHE_FLASH_ATTR layer_move(uint8_t from, uint8_t to);
 
 #endif /* LAYER_H */

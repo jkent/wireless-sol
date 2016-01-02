@@ -15,6 +15,8 @@ struct rpc_handler {
 	int (*func)(struct jsonparse_state *state, const char *action);
 };
 
+extern bool rpc_update;
+
 int ICACHE_FLASH_ATTR rpc_parse(struct jsonparse_state *state);
 
 #endif /* RPC_H */

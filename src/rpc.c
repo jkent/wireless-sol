@@ -4,7 +4,82 @@
 #include "data.h"
 #include "led.h"
 
-static int ICACHE_FLASH_ATTR layer_background_handler(struct jsonparse_state *state, const char *action)
+bool rpc_update = false;
+
+static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	int8_t id;
+
+	if (jsonparse_next(state) != '"') {
+		return RPC_ERROR_PARSE;
+	}
+
+	jsonparse_copy_value(state, name, sizeof(name));
+	if ((id = layer_find(name)) < 0) {
+		return RPC_ERROR_PARSE;
+	}
+
+	if (strcmp(action, "disable") == 0) {
+		flash_data.layer_state &= ~(1 << id);
+	} else if (strcmp(action, "enable") == 0) {
+		flash_data.layer_state |= 1 << id;
+	}
+
+	rpc_update = true;
+	return RPC_OK;
+}
+
+static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	int8_t from, to;
+	char type;
+
+	from = to = -1;
+
+	if (jsonparse_next(state) != '{') {
+		return RPC_ERROR_PARSE;
+	}
+
+	do {
+		if (jsonparse_next(state) != 'N') {
+			return RPC_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (from < 0 && strcmp(name, "name") == 0 && type == '"') {
+			jsonparse_copy_value(state, name, sizeof(name));
+			if ((from = layer_find(name)) < 0) {
+				return RPC_ERROR_PARSE;
+			}
+		} else if (to < 0 && strcmp(name, "id") == 0 && type == '0') {
+			if ((to = jsonparse_get_value_as_int(state)) < 0) {
+				return RPC_ERROR_PARSE;
+			}
+		} else {
+			return RPC_ERROR_PARSE;
+		}
+	} while ((type = jsonparse_next(state)) == ',');
+
+	if (type != '}') {
+		return RPC_ERROR_PARSE;
+	}
+
+	if (from < 0 || to < 0) {
+		return RPC_ERROR_PARSE;
+	}
+
+	if (!layer_move(from, to)) {
+		return RPC_FAIL;
+	}
+
+	rpc_update = true;
+	return RPC_OK;
+}
+
+static int ICACHE_FLASH_ATTR layer_background_set_handler(struct jsonparse_state *state, const char *action)
 {
 	int value;
 
@@ -14,38 +89,11 @@ static int ICACHE_FLASH_ATTR layer_background_handler(struct jsonparse_state *st
 
 	value = jsonparse_get_value_as_int(state);
 	if (value < 0 || value > 255) {
-		return RPC_FAIL;
-	}
-
-	flash_data.background = value;
-	flash_data.led_mode = LED_MODE_LAYER;
-	led_update_required = true;
-	return RPC_OK;
-}
-
-static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state, const char *action)
-{
-	char name[17];
-	int8_t id;
-
-	if (jsonparse_next(state) != '"') {
 		return RPC_ERROR_PARSE;
 	}
 
-	jsonparse_copy_value(state, name, sizeof(name));
-	if ((id = layer_find(name)) < 0) {
-		return RPC_FAIL;
-	}
-
-	if (strcmp(action, "disable") == 0) {
-		flash_data.layer_state &= ~(1 << id);
-	} else if (strcmp(action, "enable") == 0) {
-		flash_data.layer_state |= 1 << id;
-	} else {
-		return RPC_FAIL;
-	}
-
-	led_update_required = true;
+	flash_data.background = value;
+	rpc_update = true;
 	return RPC_OK;
 }
 
@@ -53,37 +101,42 @@ static int ICACHE_FLASH_ATTR led_set_handler(struct jsonparse_state *state, cons
 {
 	uint8_t type;
 	uint16_t i;
+	int value;
 
 	if (jsonparse_next(state) != '[') {
 		return RPC_ERROR_PARSE;
 	}
 
-	for (i = 0; i < flash_data.led_count; i++) {
-		type = jsonparse_next(state);
-		if (type == '[' || type == ',') {
-			type = jsonparse_next(state);
-		} else if (type == ']') {
-			break;
-		}
-
-		if (type != '0') {
+	i = 0;
+	do {
+		if (jsonparse_next(state) != '0') {
 			return RPC_ERROR_PARSE;
 		}
 
-		led_next[i] = jsonparse_get_value_as_int(state);
+		value = jsonparse_get_value_as_int(state);
+		if (value < 0 || value > 255) {
+			return RPC_ERROR_PARSE;
+		}
+		led_next[i++] = value;
+
+		if (i >= flash_data.led_count) {
+			break;
+		}
+	} while ((type = jsonparse_next(state)) == ',');
+
+	if (type != ']') {
+		return RPC_ERROR_PARSE;
 	}
 
 	if (i < flash_data.led_count) {
 		return RPC_FAIL;
 	}
 
-	flash_data.led_mode = LED_MODE_SET;
-	led_update_required = true;
-
+	rpc_update = true;
 	return RPC_OK;
 }
 
-static int ICACHE_FLASH_ATTR led_mode_handler(struct jsonparse_state *state, const char *action)
+static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state, const char *action)
 {
 	if (jsonparse_next(state) != '"') {
 		return RPC_ERROR_PARSE;
@@ -105,24 +158,26 @@ static int ICACHE_FLASH_ATTR led_mode_handler(struct jsonparse_state *state, con
 		return RPC_FAIL;
 	}
 
-	led_update_required = true;
+	rpc_update = true;
 	return RPC_OK;
 }
 
 static struct rpc_handler handlers[] = {
-		{"layer", "background", layer_background_handler},
 		{"layer", "disable", layer_enable_handler},
 		{"layer", "enable", layer_enable_handler},
+		{"layer", "move", layer_move_handler},
+		{"layer/background", "set", layer_background_set_handler},
 		{"led", "set", led_set_handler},
-		{"led", "mode", led_mode_handler},
+		{"led/mode", "set", led_mode_set_handler},
 		{NULL}
 };
 
 int ICACHE_FLASH_ATTR rpc_parse(struct jsonparse_state *state)
 {
-	char key[17], path[17], action[17];
+	char name[7], path[33], action[9];
 	bool have_path, have_action;
 	struct rpc_handler *handler;
+	char type;
 
 	have_path = have_action = false;
 
@@ -134,27 +189,25 @@ int ICACHE_FLASH_ATTR rpc_parse(struct jsonparse_state *state)
 		if (jsonparse_next(state) != 'N') {
 			return RPC_ERROR_PARSE;
 		}
-		jsonparse_copy_value(state, key, sizeof(key));
 
-		if (jsonparse_next(state) != '"') {
-			return RPC_ERROR_PARSE;
-		}
-		if (strcmp(key, "path") == 0) {
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (!have_path && strcmp(name, "path") == 0 && type == '"') {
 			jsonparse_copy_value(state, path, sizeof(path));
 			have_path = true;
-		} else if (strcmp(key, "action") == 0) {
+		} else if (!have_action && strcmp(name, "action") == 0 && type == '"') {
 			jsonparse_copy_value(state, action, sizeof(action));
 			have_action = true;
 		} else {
-			return RPC_FAIL;
+			return RPC_ERROR_PARSE;
 		}
-	} while (jsonparse_next(state) == ',');
+	} while ((type = jsonparse_next(state)) == ',');
 
-	if (!have_path || !have_action) {
-		return RPC_FAIL;
+	if (type != '}' || jsonparse_next(state) != ',') {
+		return RPC_ERROR_PARSE;
 	}
 
-	if (jsonparse_next(state) != ',') {
+	if (!have_path || !have_action) {
 		return RPC_ERROR_PARSE;
 	}
 

@@ -198,8 +198,8 @@ finish:
 	httpdEndHeaders(connData);
 	httpdSend(connData, rpc->status == RPC_OK ? "true" : "false", -1);
 
-	if (led_update_required) {
-		led_update_required = false;
+	if (rpc_update) {
+		rpc_update = false;
 		if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
 			memset(led_next, 0, flash_data.led_count);
 		} else if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
