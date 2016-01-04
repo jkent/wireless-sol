@@ -9,7 +9,7 @@ bool rpc_update = false;
 static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state, const char *action)
 {
 	char name[LAYER_NAME_MAX + 1];
-	int id = -1;
+	int layer_id = -1;
 	char type;
 
 	if (jsonparse_next(state) != '{') {
@@ -27,24 +27,28 @@ static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state,
 
 		jsonparse_copy_value(state, name, sizeof(name));
 		type = jsonparse_next(state);
-		if (strcmp(name, "name") == 0 && type == '"') {
-			jsonparse_copy_value(state, name, sizeof(name));
-			id = layer_find(name);
-		} else if (strcmp(name, "id") == 0 && type == '0') {
-			id = jsonparse_get_value_as_int(state);
+		if (strcmp(name, "layer") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				layer_id = layer_find(name);
+			} else if (type == '0') {
+				layer_id = jsonparse_get_value_as_int(state);
+			} else {
+				return RPC_ERROR_PARSE;
+			}
 		} else {
 			return RPC_ERROR_PARSE;
 		}
 	}
 
-	if (id < 0 || id >= layer_count()) {
+	if (layer_id < 0 || layer_id >= layer_count()) {
 		return RPC_FAIL;
 	}
 
 	if (strcmp(action, "disable") == 0) {
-		flash_data.layer_state &= ~(1 << id);
+		flash_data.layer_state &= ~(1 << layer_id);
 	} else if (strcmp(action, "enable") == 0) {
-		flash_data.layer_state |= 1 << id;
+		flash_data.layer_state |= 1 << layer_id;
 	}
 
 	rpc_update = true;
@@ -55,7 +59,7 @@ static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state,
 {
 	char name[LAYER_NAME_MAX + 1];
 	struct layer layer;
-	int id = -1;
+	int insert_at = -1;
 	char type;
 
 	memset(&layer, 0, sizeof(layer));
@@ -80,8 +84,8 @@ static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state,
 		if (strcmp(name, "name") == 0 && type == '"') {
 			jsonparse_copy_value(state, name, sizeof(name));
 			strncpy(layer.name, name, sizeof(layer.name));
-		} else if (strcmp(name, "id") == 0 && type == '0') {
-			id = jsonparse_get_value_as_int(state);
+		} else if (strcmp(name, "at") == 0 && type == '0') {
+			insert_at = jsonparse_get_value_as_int(state);
 		} else {
 			os_printf("2\n");
 			return RPC_ERROR_PARSE;
@@ -96,11 +100,11 @@ static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state,
 		return RPC_FAIL;
 	}
 
-	if (id < 0) {
-		id = layer_count();
+	if (insert_at < 0) {
+		insert_at = layer_count();
 	}
 
-	if (!layer_insert(id, &layer)) {
+	if (!layer_insert(insert_at, &layer)) {
 		return RPC_FAIL;
 	}
 
@@ -110,10 +114,10 @@ static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state,
 static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, const char *action)
 {
 	char name[LAYER_NAME_MAX + 1];
-	int from, to;
+	int layer_id, move_to;
 	char type;
 
-	from = to = -1;
+	layer_id = move_to = -1;
 
 	if (jsonparse_next(state) != '{') {
 		return RPC_ERROR_PARSE;
@@ -130,19 +134,23 @@ static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, c
 
 		jsonparse_copy_value(state, name, sizeof(name));
 		type = jsonparse_next(state);
-		if (strcmp(name, "name") == 0 && type == '"') {
-			jsonparse_copy_value(state, name, sizeof(name));
-			from = layer_find(name);
-		} else if (strcmp(name, "from") == 0 && type == '0') {
-			from = jsonparse_get_value_as_int(state);
+		if (strcmp(name, "layer") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				layer_id = layer_find(name);
+			} else if (type == '0') {
+				layer_id = jsonparse_get_value_as_int(state);
+			} else {
+				return RPC_ERROR_PARSE;
+			}
 		} else if (strcmp(name, "to") == 0 && type == '0') {
-			to = jsonparse_get_value_as_int(state);
+			move_to = jsonparse_get_value_as_int(state);
 		} else {
 			return RPC_ERROR_PARSE;
 		}
 	}
 
-	if (!layer_move(from, to)) {
+	if (!layer_move(layer_id, move_to)) {
 		return RPC_FAIL;
 	}
 
@@ -153,7 +161,7 @@ static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, c
 static int ICACHE_FLASH_ATTR layer_remove_handler(struct jsonparse_state *state, const char *action)
 {
 	char name[LAYER_NAME_MAX + 1];
-	int id = -1;
+	int layer_id = -1;
 	char type;
 
 	if (jsonparse_next(state) != '{') {
@@ -171,17 +179,21 @@ static int ICACHE_FLASH_ATTR layer_remove_handler(struct jsonparse_state *state,
 
 		jsonparse_copy_value(state, name, sizeof(name));
 		type = jsonparse_next(state);
-		if (strcmp(name, "name") == 0 && type == '"') {
-			jsonparse_copy_value(state, name, sizeof(name));
-			id = layer_find(name);
-		} else if (strcmp(name, "id") == 0 && type == '0') {
-			id = jsonparse_get_value_as_int(state);
+		if (strcmp(name, "layer") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				layer_id = layer_find(name);
+			} else if (type == '0') {
+				layer_id = jsonparse_get_value_as_int(state);
+			} else {
+				return RPC_ERROR_PARSE;
+			}
 		} else {
 			return RPC_ERROR_PARSE;
 		}
 	}
 
-	if (!layer_remove(id, NULL)) {
+	if (!layer_remove(layer_id, NULL)) {
 		return RPC_FAIL;
 	}
 
@@ -193,7 +205,7 @@ static int ICACHE_FLASH_ATTR layer_rename_handler(struct jsonparse_state *state,
 {
 	char name[LAYER_NAME_MAX + 1];
 	char new[LAYER_NAME_MAX + 1];
-	int id = -1;
+	int layer_id = -1;
 	char type;
 	struct layer *layer;
 
@@ -214,23 +226,27 @@ static int ICACHE_FLASH_ATTR layer_rename_handler(struct jsonparse_state *state,
 
 		jsonparse_copy_value(state, name, sizeof(name));
 		type = jsonparse_next(state);
-		if (strcmp(name, "old") == 0 && type == '"') {
-			jsonparse_copy_value(state, name, sizeof(name));
-			id = layer_find(name);
-		} else if (strcmp(name, "id") == 0 && type == '0') {
-			id = jsonparse_get_value_as_int(state);
-		} else if (strcmp(name, "new") == 0 && type == '"') {
+		if (strcmp(name, "layer") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				layer_id = layer_find(name);
+			} else if (type == '0') {
+				layer_id = jsonparse_get_value_as_int(state);
+			} else {
+				return RPC_ERROR_PARSE;
+			}
+		} else if (strcmp(name, "name") == 0 && type == '"') {
 			jsonparse_copy_value(state, new, sizeof(new));
 		} else {
 			return RPC_ERROR_PARSE;
 		}
 	}
 
-	if (id < 0 || id >= layer_count() || new[0] == '\0') {
+	if (layer_id < 0 || layer_id >= layer_count() || new[0] == '\0') {
 		return RPC_FAIL;
 	}
 
-	layer = &flash_data.layers[id];
+	layer = &flash_data.layers[layer_id];
 
 	if (strcmp(layer->name, new) == 0) {
 		return RPC_OK;
@@ -510,7 +526,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 			} else {
 				return RPC_ERROR_PARSE;
 			}
-		} else if (strcmp(name, "id") == 0 && type == '0') {
+		} else if (strcmp(name, "range") == 0 && type == '0') {
 			range_id = jsonparse_get_value_as_int(state);
 		} else if (strcmp(name, "type") == 0 && type == '"') {
 			if (jsonparse_strcmp_value(state, "set") == 0) {
@@ -618,7 +634,7 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 			} else {
 				return RPC_ERROR_PARSE;
 			}
-		} else if (strcmp(name, "id") == 0 && type == '0') {
+		} else if (strcmp(name, "range") == 0 && type == '0') {
 			range_id = jsonparse_get_value_as_int(state);
 		} else {
 			return RPC_ERROR_PARSE;
