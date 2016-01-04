@@ -12,6 +12,7 @@ enum {
 	RANGE_TYPE_SET,
 	RANGE_TYPE_COPY,
 	RANGE_TYPE_TAPER,
+	RANGE_TYPE_MAX
 };
 
 struct range {
@@ -32,5 +33,8 @@ uint8_t ICACHE_FLASH_ATTR layer_count(void);
 bool ICACHE_FLASH_ATTR layer_insert(uint8_t id, struct layer *layer);
 bool ICACHE_FLASH_ATTR layer_remove(uint8_t id, struct layer *layer);
 bool ICACHE_FLASH_ATTR layer_move(uint8_t from, uint8_t to);
+uint8_t ICACHE_FLASH_ATTR range_count(struct layer *layer);
+bool ICACHE_FLASH_ATTR range_add(struct layer *layer, struct range *range);
+bool ICACHE_FLASH_ATTR range_remove(struct layer *layer, uint8_t id, struct range *range);
 
 #endif /* LAYER_H */

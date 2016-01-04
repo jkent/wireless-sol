@@ -176,3 +176,76 @@ bool ICACHE_FLASH_ATTR layer_move(uint8_t from, uint8_t to)
 	flash_data.layer_state |= state ? 1 << to : 0;
 	return true;
 }
+
+uint8_t ICACHE_FLASH_ATTR range_count(struct layer *layer)
+{
+	uint8_t i;
+
+	for (i = 0; i < RANGE_MAX; i++) {
+		if (layer->ranges[i].type == RANGE_TYPE_NONE) {
+			break;
+		}
+	}
+	return i;
+}
+
+bool ICACHE_FLASH_ATTR range_add(struct layer *layer, struct range *range)
+{
+	uint8_t count, id;
+
+	if (!layer || (count = range_count(layer)) >= RANGE_MAX) {
+		return false;
+	}
+
+	if (range->type == RANGE_TYPE_NONE || range->type >= RANGE_TYPE_MAX) {
+		return false;
+	}
+
+	if (range->lb > range->ub || range->ub >= flash_data.led_count) {
+		return false;
+	}
+
+	for (id = 0; id < count; id++) {
+		if ((range->lb >= layer->ranges[id].lb && range->lb <= layer->ranges[id].ub) ||
+			(range->ub >= layer->ranges[id].lb && range->ub <= layer->ranges[id].ub)) {
+			return false;
+		}
+	}
+
+	for (id = 0; id < count; id++) {
+		if (range->lb < layer->ranges[id].lb) {
+			break;
+		}
+	}
+
+	if (count && id < count) {
+		memmove(&layer->ranges[id + 1], &layer->ranges[id], sizeof(struct range) * (count - id));
+	}
+
+	memcpy(&layer->ranges[id], range, sizeof(struct range));
+	return true;
+}
+
+bool ICACHE_FLASH_ATTR range_remove(struct layer *layer, uint8_t id, struct range *range)
+{
+	uint8_t count;
+
+	if (!layer) {
+		return false;
+	}
+
+	if (id >= (count = range_count(layer))) {
+		return false;
+	}
+
+	if (range) {
+		memcpy(range, &layer->ranges[id], sizeof(struct range));
+	}
+
+	if (id < count - 1) {
+		memmove(&layer->ranges[id], &layer->ranges[id + 1], sizeof(struct range) * (count - id - 1));
+	}
+
+	memset(&layer->ranges[count - 1], 0, sizeof(struct range));
+	return true;
+}

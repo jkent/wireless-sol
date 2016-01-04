@@ -392,6 +392,256 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 	return RPC_OK;
 }
 
+static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	struct layer *layer;
+	struct range range;
+	uint8_t layer_id = -1;
+	bool have_type, have_lb, have_ub, have_value;
+	char type;
+
+	have_type = have_lb = have_ub = have_value = false;
+
+	if (jsonparse_next(state) != '{') {
+		return RPC_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			return RPC_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "layer") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				layer_id = layer_find(name);
+			} else if (type == '0') {
+				layer_id = jsonparse_get_value_as_int(state);
+			} else {
+				return RPC_ERROR_PARSE;
+			}
+		} else if (strcmp(name, "type") == 0 && type == '"') {
+			if (jsonparse_strcmp_value(state, "set") == 0) {
+				range.type = RANGE_TYPE_SET;
+			} else if (jsonparse_strcmp_value(state, "copy") == 0) {
+				range.type = RANGE_TYPE_COPY;
+			} else if (jsonparse_strcmp_value(state, "taper") == 0) {
+				range.type = RANGE_TYPE_TAPER;
+			} else {
+				return RPC_FAIL;
+			}
+			have_type = true;
+		} else if (strcmp(name, "lb") == 0 && type == '0') {
+			range.lb = jsonparse_get_value_as_int(state);
+			have_lb = true;
+		} else if (strcmp(name, "ub") == 0 && type == '0') {
+			range.ub = jsonparse_get_value_as_int(state);
+			have_ub = true;
+		} else if (strcmp(name, "value") == 0 && type == '0') {
+			range.value = jsonparse_get_value_as_int(state);
+			have_value = true;
+		} else {
+			return RPC_ERROR_PARSE;
+		}
+	}
+
+	if (layer_id < 0 || layer_id >= layer_count()) {
+		return RPC_FAIL;
+	}
+
+	layer = &flash_data.layers[layer_id];
+
+	if (!have_type || !have_lb || !have_ub || !have_value ) {
+		return RPC_FAIL;
+	}
+
+	if (!range_add(layer, &range)) {
+		return RPC_FAIL;
+	}
+
+	if (flash_data.layer_state & 1 << layer_id) {
+		rpc_update = true;
+	}
+
+	return RPC_OK;
+}
+
+static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	struct layer *layer;
+	struct range range;
+	uint8_t layer_id = -1;
+	uint8_t range_id = -1;
+	uint8_t count;
+	bool have_type, have_lb, have_ub, have_value;
+	char type;
+
+	have_type = have_lb = have_ub = have_value = false;
+
+	if (jsonparse_next(state) != '{') {
+		return RPC_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			return RPC_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "layer") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				layer_id = layer_find(name);
+			} else if (type == '0') {
+				layer_id = jsonparse_get_value_as_int(state);
+			} else {
+				return RPC_ERROR_PARSE;
+			}
+		} else if (strcmp(name, "id") == 0 && type == '0') {
+			range_id = jsonparse_get_value_as_int(state);
+		} else if (strcmp(name, "type") == 0 && type == '"') {
+			if (jsonparse_strcmp_value(state, "set") == 0) {
+				range.type = RANGE_TYPE_SET;
+			} else if (jsonparse_strcmp_value(state, "copy") == 0) {
+				range.type = RANGE_TYPE_COPY;
+			} else if (jsonparse_strcmp_value(state, "taper") == 0) {
+				range.type = RANGE_TYPE_TAPER;
+			} else {
+				return RPC_FAIL;
+			}
+			have_type = true;
+		} else if (strcmp(name, "lb") == 0 && type == '0') {
+			range.lb = jsonparse_get_value_as_int(state);
+			have_lb = true;
+		} else if (strcmp(name, "ub") == 0 && type == '0') {
+			range.ub = jsonparse_get_value_as_int(state);
+			have_ub = true;
+		} else if (strcmp(name, "value") == 0 && type == '0') {
+			range.value = jsonparse_get_value_as_int(state);
+			have_value = true;
+		} else {
+			return RPC_ERROR_PARSE;
+		}
+	}
+
+	if (layer_id < 0 || layer_id >= layer_count()) {
+		return RPC_FAIL;
+	}
+
+	layer = &flash_data.layers[layer_id];
+
+	count = range_count(layer);
+
+	if (range_id < 0 || range_id >= count) {
+		return RPC_FAIL;
+	}
+
+	if (!have_type) {
+		range.type = layer->ranges[range_id].type;
+	}
+
+	if (!have_lb) {
+		range.lb = layer->ranges[range_id].lb;
+	}
+
+	if (!have_ub) {
+		range.ub = layer->ranges[range_id].ub;
+	}
+
+	if (!have_value) {
+		range.value = layer->ranges[range_id].value;
+	}
+
+	if (range.lb > range.ub || range.ub >= flash_data.led_count) {
+		return RPC_FAIL;
+	}
+
+	if (range_id > 0 && range.lb <= layer->ranges[range_id - 1].ub) {
+		return RPC_FAIL;
+	}
+
+	if (count && range_id < count - 1 && range.ub >= layer->ranges[range_id + 1].lb) {
+		return RPC_FAIL;
+	}
+
+	memcpy(&layer->ranges[range_id], &range, sizeof(struct range));
+
+	if (flash_data.layer_state & 1 << layer_id) {
+		rpc_update = true;
+	}
+
+	return RPC_OK;
+}
+
+static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[LAYER_NAME_MAX + 1];
+	struct layer *layer;
+	uint8_t layer_id = -1;
+	uint8_t range_id = -1;
+	char type;
+
+	if (jsonparse_next(state) != '{') {
+		return RPC_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			return RPC_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "layer") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				layer_id = layer_find(name);
+			} else if (type == '0') {
+				layer_id = jsonparse_get_value_as_int(state);
+			} else {
+				return RPC_ERROR_PARSE;
+			}
+		} else if (strcmp(name, "id") == 0 && type == '0') {
+			range_id = jsonparse_get_value_as_int(state);
+		} else {
+			return RPC_ERROR_PARSE;
+		}
+	}
+
+	if (layer_id < 0 || layer_id >= layer_count()) {
+		return RPC_FAIL;
+	}
+
+	layer = &flash_data.layers[layer_id];
+
+	if (!range_remove(layer, range_id, NULL)) {
+		return RPC_FAIL;
+	}
+
+	if (flash_data.layer_state & 1 << layer_id) {
+		rpc_update = true;
+	}
+
+	return RPC_OK;
+}
+
 static struct rpc_handler handlers[] = {
 	{"layer", "disable", layer_enable_handler},
 	{"layer", "enable", layer_enable_handler},
@@ -402,6 +652,9 @@ static struct rpc_handler handlers[] = {
 	{"layer/background", "set", layer_background_set_handler},
 	{"led", "set", led_set_handler},
 	{"led/mode", "set", led_mode_set_handler},
+	{"range", "add", range_add_handler},
+	{"range", "edit", range_edit_handler},
+	{"range", "remove", range_remove_handler},
 	{NULL}
 };
 
