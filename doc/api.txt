@@ -1,0 +1,79 @@
+/cgi/api expects a post containing a JSON array of API calls. Syntax is as
+follows:
+
+var api = [path, action, data];
+var json = [api, api, ...];
+
+/cgi/api returns a 500 error if there is a json parsing error, true if all
+commands executed okay, or false if one or more commands failed.
+
+Below is a list of all calls and data expected.
+
+var path = "layer"; var action = "enable"/"disable";
+var data = {
+  "layer": <str>/<uint>
+};
+
+var path = "layer"; var action = "insert";
+var data = {
+  "name": <str>,
+  ["at": <uint>]
+};
+
+var path = "layer"; var action = "move";
+var data = {
+  "layer": <str>/<int>,
+  "to": <uint>
+};
+
+var path = "layer"; var action = "remove";
+var data = {
+  "layer": <str>/<uint>
+};
+
+var path = "layer"; var action = "rename";
+var data = {
+  "layer": <str>/<uint>,
+  "name": <str>
+};
+
+var path = "layer.background"; var action = "set";
+var data = {
+  "value": <uint8_t>
+};
+
+var path = "led"; var action = "set";
+var data = {
+  "values": [<uint8_t>, <uint8_t>, ...]
+};
+
+var path = "led.mode"; var action = "set";
+var data = {
+  ["mode": "off"/"layer"/"set"],
+  ["fade": true/false]
+};
+
+var path = "range"; var action = "add";
+var data = {
+  "layer": <str>/<uint>,
+  "type": "set"/"copy"/"taper",
+  "lb": <uint16_t>,
+  "ub": <uint16_t>,
+  ["value": <uint16_t>=0]
+};
+
+var path = "range"; var action = "edit";
+var data = {
+  "layer": <str>/<uint>,
+  "range": <uint>,
+  ["type": "set"/"copy"/"taper"],
+  ["lb": <uint16_t>],
+  ["ub": <uint16_t>],
+  ["value": <uint16_t>]
+};
+
+var path = "range"; var action = "remove";
+var data = {
+  "layer": <str>/<uint>,
+  "range": <uint>
+};

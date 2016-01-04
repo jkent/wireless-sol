@@ -41,7 +41,11 @@ static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state,
 		}
 	}
 
-	if (layer_id < 0 || layer_id >= layer_count()) {
+	if (layer_id < 0) {
+		return API_ERROR_PARSE;
+	}
+
+	if (layer_id >= layer_count()) {
 		return API_FAIL;
 	}
 
@@ -93,7 +97,7 @@ static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state,
 	}
 
 	if (layer.name[0] == '\0') {
-		return API_FAIL;
+		return API_ERROR_PARSE;
 	}
 
 	if (layer_find(layer.name) >= 0) {
@@ -242,7 +246,11 @@ static int ICACHE_FLASH_ATTR layer_rename_handler(struct jsonparse_state *state,
 		}
 	}
 
-	if (layer_id < 0 || layer_id >= layer_count() || new[0] == '\0') {
+	if (layer_id < 0 || new[0] == '\0') {
+		return API_ERROR_PARSE;
+	}
+
+	if (layer_id >= layer_count()) {
 		return API_FAIL;
 	}
 
@@ -388,7 +396,7 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 			} else if (jsonparse_strcmp_value(state, "set") == 0) {
 				mode = (mode & LED_MODE_FADE) | LED_MODE_SET;
 			} else {
-				return API_FAIL;
+				return API_ERROR_PARSE;
 			}
 		} else if (strcmp(name, "fade") == 0 && type == '"') {
 			if (type == 't') {
@@ -451,7 +459,7 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 			} else if (jsonparse_strcmp_value(state, "taper") == 0) {
 				range.type = RANGE_TYPE_TAPER;
 			} else {
-				return API_FAIL;
+				return API_ERROR_PARSE;
 			}
 			have_type = true;
 		} else if (strcmp(name, "lb") == 0 && type == '0') {
@@ -468,14 +476,18 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 		}
 	}
 
-	if (layer_id < 0 || layer_id >= layer_count()) {
+	if (layer_id < 0) {
+		return API_ERROR_PARSE;
+	}
+
+	if (layer_id >= layer_count()) {
 		return API_FAIL;
 	}
 
 	layer = &flash_data.layers[layer_id];
 
 	if (!have_type || !have_lb || !have_ub ) {
-		return API_FAIL;
+		return API_ERROR_PARSE;
 	}
 
 	if (!have_value) {
@@ -540,7 +552,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 			} else if (jsonparse_strcmp_value(state, "taper") == 0) {
 				range.type = RANGE_TYPE_TAPER;
 			} else {
-				return API_FAIL;
+				return API_ERROR_PARSE;
 			}
 			have_type = true;
 		} else if (strcmp(name, "lb") == 0 && type == '0') {
@@ -557,7 +569,11 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 		}
 	}
 
-	if (layer_id < 0 || layer_id >= layer_count()) {
+	if (layer_id < 0) {
+		return API_ERROR_PARSE;
+	}
+
+	if (layer_id >= layer_count()) {
 		return API_FAIL;
 	}
 
@@ -565,7 +581,11 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 
 	count = range_count(layer);
 
-	if (range_id < 0 || range_id >= count) {
+	if (range_id < 0) {
+		return API_ERROR_PARSE;
+	}
+
+	if (range_id >= count) {
 		return API_FAIL;
 	}
 
@@ -645,7 +665,11 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 		}
 	}
 
-	if (layer_id < 0 || layer_id >= layer_count()) {
+	if (layer_id < 0) {
+		return API_ERROR_PARSE;
+	}
+
+	if (layer_id >= layer_count()) {
 		return API_FAIL;
 	}
 
@@ -669,9 +693,9 @@ static struct api_handler handlers[] = {
 	{"layer", "move", layer_move_handler},
 	{"layer", "remove", layer_remove_handler},
 	{"layer", "rename", layer_rename_handler},
-	{"layer/background", "set", layer_background_set_handler},
+	{"layer.background", "set", layer_background_set_handler},
 	{"led", "set", led_set_handler},
-	{"led/mode", "set", led_mode_set_handler},
+	{"led.mode", "set", led_mode_set_handler},
 	{"range", "add", range_add_handler},
 	{"range", "edit", range_edit_handler},
 	{"range", "remove", range_remove_handler},
@@ -680,35 +704,20 @@ static struct api_handler handlers[] = {
 
 int ICACHE_FLASH_ATTR api_parse(struct jsonparse_state *state)
 {
-	char name[7], path[33], action[9];
+	char path[33], action[9];
 	struct api_handler *handler;
-	char type;
 
-	path[0] = action[0] = '\0';
-
-	if (jsonparse_next(state) != '[' || jsonparse_next(state) != '{') {
+	if (jsonparse_next(state) != '[' || jsonparse_next(state) != '"') {
 		return API_ERROR_PARSE;
 	}
 
-	while (true) {
-		if ((type = jsonparse_next(state)) == '}') {
-			break;
-		} else if (type == ',') {
-			continue;
-		} else if (type != 'N') {
-			return API_ERROR_PARSE;
-		}
+	jsonparse_copy_value(state, path, sizeof(path));
 
-		jsonparse_copy_value(state, name, sizeof(name));
-		type = jsonparse_next(state);
-		if (strcmp(name, "path") == 0 && type == '"') {
-			jsonparse_copy_value(state, path, sizeof(path));
-		} else if (strcmp(name, "action") == 0 && type == '"') {
-			jsonparse_copy_value(state, action, sizeof(action));
-		} else {
-			return API_ERROR_PARSE;
-		}
+	if (jsonparse_next(state) != ',' || jsonparse_next(state) != '"') {
+		return API_ERROR_PARSE;
 	}
+
+	jsonparse_copy_value(state, action, sizeof(action));
 
 	if (jsonparse_next(state) != ',') {
 		return API_ERROR_PARSE;
