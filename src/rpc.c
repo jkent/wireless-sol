@@ -365,12 +365,11 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 		jsonparse_copy_value(state, name, sizeof(name));
 		type = jsonparse_next(state);
 		if (strcmp(name, "mode") == 0 && type == '"') {
-			jsonparse_copy_value(state, name, sizeof(name));
-			if (strcmp(name, "off") == 0) {
+			if (jsonparse_strcmp_value(state, "off") == 0) {
 				mode = (mode & LED_MODE_FADE) | LED_MODE_OFF;
-			} else if (strcmp(name, "layer") == 0) {
+			} else if (jsonparse_strcmp_value(state, "layer") == 0) {
 				mode = (mode & LED_MODE_FADE) | LED_MODE_LAYER;
-			} else if (strcmp(name, "set") == 0) {
+			} else if (jsonparse_strcmp_value(state, "set") == 0) {
 				mode = (mode & LED_MODE_FADE) | LED_MODE_SET;
 			} else {
 				return RPC_FAIL;
