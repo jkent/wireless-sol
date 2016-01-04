@@ -474,8 +474,12 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 
 	layer = &flash_data.layers[layer_id];
 
-	if (!have_type || !have_lb || !have_ub || !have_value ) {
+	if (!have_type || !have_lb || !have_ub ) {
 		return RPC_FAIL;
+	}
+
+	if (!have_value) {
+		range.value = 0;
 	}
 
 	if (!range_add(layer, &range)) {
