@@ -394,16 +394,16 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 }
 
 static struct rpc_handler handlers[] = {
-		{"layer", "disable", layer_enable_handler},
-		{"layer", "enable", layer_enable_handler},
-		{"layer", "insert", layer_insert_handler},
-		{"layer", "move", layer_move_handler},
-		{"layer", "remove", layer_remove_handler},
-		{"layer", "rename", layer_rename_handler},
-		{"layer/background", "set", layer_background_set_handler},
-		{"led", "set", led_set_handler},
-		{"led/mode", "set", led_mode_set_handler},
-		{NULL}
+	{"layer", "disable", layer_enable_handler},
+	{"layer", "enable", layer_enable_handler},
+	{"layer", "insert", layer_insert_handler},
+	{"layer", "move", layer_move_handler},
+	{"layer", "remove", layer_remove_handler},
+	{"layer", "rename", layer_rename_handler},
+	{"layer/background", "set", layer_background_set_handler},
+	{"led", "set", led_set_handler},
+	{"led/mode", "set", led_mode_set_handler},
+	{NULL}
 };
 
 int ICACHE_FLASH_ATTR rpc_parse(struct jsonparse_state *state)

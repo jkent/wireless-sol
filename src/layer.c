@@ -113,6 +113,24 @@ uint8_t ICACHE_FLASH_ATTR layer_count(void)
 	return LAYER_MAX;
 }
 
+bool ICACHE_FLASH_ATTR layer_insert(uint8_t id, struct layer *layer)
+{
+	uint8_t count = layer_count();
+
+	if (id > count || count >= LAYER_MAX || !layer) {
+		return false;
+	}
+
+	if (count && id < count) {
+		memmove(&flash_data.layers[id + 1], &flash_data.layers[id], sizeof(struct layer) * (count - id));
+	}
+
+	memcpy(&flash_data.layers[id], layer, sizeof(struct layer));
+
+	flash_data.layer_state = bit_insert(id, flash_data.layer_state);
+	return true;
+}
+
 bool ICACHE_FLASH_ATTR layer_remove(uint8_t id, struct layer *layer)
 {
 	uint8_t count = layer_count();
@@ -132,24 +150,6 @@ bool ICACHE_FLASH_ATTR layer_remove(uint8_t id, struct layer *layer)
 	memset(&flash_data.layers[count - 1], 0, sizeof(struct layer));
 
 	flash_data.layer_state = bit_remove(id, flash_data.layer_state);
-	return true;
-}
-
-bool ICACHE_FLASH_ATTR layer_insert(uint8_t id, struct layer *layer)
-{
-	uint8_t count = layer_count();
-
-	if (id > count || count >= LAYER_MAX || !layer) {
-		return false;
-	}
-
-	if (count && id < count) {
-		memmove(&flash_data.layers[id + 1], &flash_data.layers[id], sizeof(struct layer) * (count - id));
-	}
-
-	memcpy(&flash_data.layers[id], layer, sizeof(struct layer));
-
-	flash_data.layer_state = bit_insert(id, flash_data.layer_state);
 	return true;
 }
 
