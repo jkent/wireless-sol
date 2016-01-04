@@ -1,8 +1,8 @@
 #include <esp8266.h>
+#include "api.h"
 #include "httpd.h"
 #include "jsontree.h"
 #include "jsonparse.h"
-#include "rpc.h"
 #include "led.h"
 #include "data.h"
 
@@ -10,8 +10,8 @@
 #define MAX_POST 1024
 #define MAX_SENDBUFF_LEN 2048
 
-#define RPC_MIN_CHUNK (MAX_POST / 2)
-#define RPC_MAX_BUFF (MAX_POST + RPC_MIN_CHUNK)
+#define API_MIN_CHUNK (MAX_POST / 2)
+#define API_MAX_BUFF (MAX_POST + API_MIN_CHUNK)
 
 struct HttpdPriv {
 	char head[MAX_HEAD_LEN];
@@ -20,10 +20,10 @@ struct HttpdPriv {
 	int sendBuffLen;
 };
 
-struct RpcData {
+struct ApiData {
 	struct jsonparse_state state;
 	int buffLen;
-	char buff[RPC_MAX_BUFF];
+	char buff[API_MAX_BUFF];
 	uint8_t depth;
 	int8_t status;
 };
@@ -81,9 +81,9 @@ int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
 	return HTTPD_CGI_DONE;
 }
 
-int ICACHE_FLASH_ATTR cgiRpc(HttpdConnData *connData)
+int ICACHE_FLASH_ATTR cgiApi(HttpdConnData *connData)
 {
-	struct RpcData *rpc = (struct RpcData *)connData->cgiPrivData;
+	struct ApiData *api = (struct ApiData *)connData->cgiPrivData;
 	int nbytes, status;
 	char type;
 
@@ -99,24 +99,24 @@ int ICACHE_FLASH_ATTR cgiRpc(HttpdConnData *connData)
 	}
 
 	if (connData->post->received <= MAX_POST) {
-		rpc = malloc(sizeof(struct RpcData));
-		jsonparse_setup(&rpc->state, rpc->buff, MAX_POST);
-		rpc->buffLen = 0;
-		rpc->depth = 0;
-		rpc->status = RPC_OK;
+		api = malloc(sizeof(struct ApiData));
+		jsonparse_setup(&api->state, api->buff, MAX_POST);
+		api->buffLen = 0;
+		api->depth = 0;
+		api->status = API_OK;
 
-		connData->cgiPrivData = rpc;
+		connData->cgiPrivData = api;
 	}
 
-	if (rpc->status < RPC_OK) {
+	if (api->status < API_OK) {
 		goto finish;
 	}
 
 	while (true) {
-		nbytes = RPC_MAX_BUFF - rpc->buffLen - 1;
+		nbytes = API_MAX_BUFF - api->buffLen - 1;
 		nbytes = connData->post->buffLen < nbytes ? connData->post->buffLen : nbytes;
-		memcpy(&rpc->buff[rpc->buffLen], connData->post->buff, nbytes);
-		rpc->buffLen += nbytes;
+		memcpy(&api->buff[api->buffLen], connData->post->buff, nbytes);
+		api->buffLen += nbytes;
 		memmove(connData->post->buff, &connData->post->buff[nbytes], connData->post->buffLen - nbytes);
 		connData->post->buffLen -= nbytes;
 		if (connData->post->buffLen == 0) {
@@ -125,57 +125,57 @@ int ICACHE_FLASH_ATTR cgiRpc(HttpdConnData *connData)
 			}
 			break;
 		}
-		while (rpc->state.pos < RPC_MIN_CHUNK) {
-			type = jsonparse_next(&rpc->state);
+		while (api->state.pos < API_MIN_CHUNK) {
+			type = jsonparse_next(&api->state);
 			if (type == ',') {
 				/* do nothing */
 			} else if (type == '[') {
-				rpc->depth = rpc->state.depth;
+				api->depth = api->state.depth;
 			} else {
-				rpc->status = RPC_ERROR_PARSE;
+				api->status = API_ERROR_PARSE;
 				goto finish;
 			}
-			if ((status = rpc_parse(&rpc->state)) != RPC_OK) {
-				rpc->status = status;
-				if (status < RPC_OK) {
+			if ((status = api_parse(&api->state)) != API_OK) {
+				api->status = status;
+				if (status < API_OK) {
 					goto finish;
 				}
 			}
-			while (rpc->state.depth > rpc->depth) {
-				if (!jsonparse_next(&rpc->state)) {
-					rpc->status = RPC_ERROR_PARSE;
+			while (api->state.depth > api->depth) {
+				if (!jsonparse_next(&api->state)) {
+					api->status = API_ERROR_PARSE;
 					goto finish;
 				}
 			}
 		}
-		memmove(rpc->buff, &rpc->buff[rpc->state.pos], rpc->buffLen - rpc->state.pos);
-		rpc->buffLen -= rpc->state.pos;
-		rpc->state.pos = 0;
+		memmove(api->buff, &api->buff[api->state.pos], api->buffLen - api->state.pos);
+		api->buffLen -= api->state.pos;
+		api->state.pos = 0;
 	}
 
-	rpc->buff[rpc->buffLen] = '\0';
-	rpc->state.len = rpc->buffLen;
+	api->buff[api->buffLen] = '\0';
+	api->state.len = api->buffLen;
 	while (true) {
-		type = jsonparse_next(&rpc->state);
+		type = jsonparse_next(&api->state);
 		if (type == ',') {
 			/* do nothing */
 		} else if (type == '[') {
-			rpc->depth = rpc->state.depth;
+			api->depth = api->state.depth;
 		} else {
-			if (rpc->state.error != JSON_ERROR_OK) {
-				rpc->status = RPC_ERROR_PARSE;
+			if (api->state.error != JSON_ERROR_OK) {
+				api->status = API_ERROR_PARSE;
 			}
 			goto finish;
 		}
-		if ((status = rpc_parse(&rpc->state)) != RPC_OK) {
-			rpc->status = status;
-			if (status < RPC_OK) {
+		if ((status = api_parse(&api->state)) != API_OK) {
+			api->status = status;
+			if (status < API_OK) {
 				goto finish;
 			}
 		}
-		while (rpc->state.depth > rpc->depth) {
-			if (!jsonparse_next(&rpc->state)) {
-				rpc->status = RPC_ERROR_PARSE;
+		while (api->state.depth > api->depth) {
+			if (!jsonparse_next(&api->state)) {
+				api->status = API_ERROR_PARSE;
 				goto finish;
 			}
 		}
@@ -186,7 +186,7 @@ finish:
 		return HTTPD_CGI_MORE;
 	}
 
-	if (rpc->status < RPC_OK) {
+	if (api->status < API_OK) {
 		httpdStartResponse(connData, 500);
 		httpdHeader(connData, "Content-Type", "text/html");
 		httpdEndHeaders(connData);
@@ -196,10 +196,10 @@ finish:
 	httpdStartResponse(connData, 200);
 	httpdHeader(connData, "Content-Type", "application/json");
 	httpdEndHeaders(connData);
-	httpdSend(connData, rpc->status == RPC_OK ? "true" : "false", -1);
+	httpdSend(connData, api->status == API_OK ? "true" : "false", -1);
 
-	if (rpc_update) {
-		rpc_update = false;
+	if (api_update) {
+		api_update = false;
 		if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
 			memset(led_next, 0, flash_data.led_count);
 		} else if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
@@ -215,7 +215,7 @@ finish:
 	}
 
 done:
-	free(rpc);
+	free(api);
 	connData->cgiPrivData = NULL;
 	return HTTPD_CGI_DONE;
 }

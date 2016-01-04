@@ -12,7 +12,7 @@
 function do_post() {
 	$("#json_status").text("waiting");
 	var send = $("#json_send").val();
-	$.post("/cgi/rpc", $("#json_send").val(), function(data, textStatus, jqXHR) {
+	$.post("/cgi/api", $("#json_send").val(), function(data, textStatus, jqXHR) {
 		$("#json_status").text(data);
 	}, "text").fail(function() {
 		$("#json_status").text("error");

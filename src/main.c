@@ -47,9 +47,9 @@ static void ICACHE_FLASH_ATTR wifi_handle_event(System_Event_t *evt)
 
 HttpdBuiltInUrl builtInUrls[] = {
 	{ "/", cgiRedirect, "/index.html" },
+	{ "/cgi/api", cgiApi, NULL},
 	{ "/cgi/layer.json", cgiJson, &json_layer_callback },
 	{ "/cgi/led.json", cgiJson, &json_led_callback },
-	{ "/cgi/rpc", cgiRpc, NULL},
 	{ "/cgi/settings.json", cgiJson, &json_settings_callback },
 	{ "*", cgiEspFsHook, NULL },
 	{ NULL }
