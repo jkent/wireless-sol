@@ -416,7 +416,7 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 			} else {
 				return API_ERROR_PARSE;
 			}
-		} else if (strcmp(name, "fade") == 0 && type == '"') {
+		} else if (strcmp(name, "fade") == 0) {
 			if (type == 't') {
 				mode |= LED_MODE_FADE;
 			} else if (type == 'f') {
