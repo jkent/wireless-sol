@@ -6,7 +6,7 @@
 
 bool api_update = false;
 
-static int ICACHE_FLASH_ATTR flash_save_handler(struct jsonparse_state *state, const char *action)
+static int ICACHE_FLASH_ATTR config_save_handler(struct jsonparse_state *state, const char *action)
 {
 	if (strcmp(action, "load") == 0) {
 		data_load();
@@ -15,8 +15,6 @@ static int ICACHE_FLASH_ATTR flash_save_handler(struct jsonparse_state *state, c
 	} else {
 		return API_FAIL;
 	}
-
-	data_unsaved_config = false;
 	return API_OK;
 }
 
@@ -70,6 +68,7 @@ static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state,
 	}
 
 	api_update = true;
+	status_dirty = true;
 	return API_OK;
 }
 
@@ -126,7 +125,7 @@ static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state,
 		return API_FAIL;
 	}
 
-	data_unsaved_config = true;
+	config_dirty = true;
 	return API_OK;
 }
 
@@ -174,7 +173,8 @@ static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, c
 	}
 
 	api_update = true;
-	data_unsaved_config = true;
+	config_dirty = true;
+	status_dirty = true;
 	return API_OK;
 }
 
@@ -218,7 +218,8 @@ static int ICACHE_FLASH_ATTR layer_remove_handler(struct jsonparse_state *state,
 	}
 
 	api_update = true;
-	data_unsaved_config = true;
+	config_dirty = true;
+	status_dirty = true;
 	return API_OK;
 }
 
@@ -282,7 +283,7 @@ static int ICACHE_FLASH_ATTR layer_rename_handler(struct jsonparse_state *state,
 	}
 
 	strncpy(layer->name, new, sizeof(layer->name));
-	data_unsaved_config = true;
+	config_dirty = true;
 	return API_OK;
 }
 
@@ -321,6 +322,7 @@ static int ICACHE_FLASH_ATTR layer_background_set_handler(struct jsonparse_state
 
 	data_status.background = value;
 	api_update = true;
+	status_dirty = true;
 	return API_OK;
 }
 
@@ -431,6 +433,7 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 
 	data_status.led_mode = mode;
 	api_update = true;
+	status_dirty = true;
 	return API_OK;
 }
 
@@ -524,7 +527,7 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 		api_update = true;
 	}
 
-	data_unsaved_config = true;
+	config_dirty = true;
 	return API_OK;
 }
 
@@ -650,7 +653,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 		api_update = true;
 	}
 
-	data_unsaved_config = true;
+	config_dirty = true;
 	return API_OK;
 }
 
@@ -701,23 +704,23 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 		return API_FAIL;
 	}
 
-	layer = &data_config.layers[layer_id];
+	layer = &config_data.layers[layer_id];
 
 	if (!range_remove(layer, range_id, NULL)) {
 		return API_FAIL;
 	}
 
-	if (data_status.layer_state & 1 << layer_id) {
+	if (status_data.layer_state & 1 << layer_id) {
 		api_update = true;
 	}
 
-	data_unsaved_config = true;
+	config_dirty = true;
 	return API_OK;
 }
 
 static struct api_handler handlers[] = {
-	{"flash", "load", flash_save_handler},
-	{"flash", "save", flash_save_handler},
+	{"config", "load", config_save_handler},
+	{"config", "save", config_save_handler},
 	{"layer", "disable", layer_enable_handler},
 	{"layer", "enable", layer_enable_handler},
 	{"layer", "insert", layer_insert_handler},

@@ -11,7 +11,6 @@
 struct data_config {
 	uint32_t block_status;
 
-	/* configuration */
 	uint16_t led_count;
 	struct layer layers[LAYER_MAX];
 
@@ -26,7 +25,8 @@ struct data_status {
 
 extern struct data_config data_config;
 extern struct data_status data_status;
-extern bool data_unsaved_config;
+extern bool config_dirty;
+extern bool status_dirty;
 
 void ICACHE_FLASH_ATTR data_init(void);
 void ICACHE_FLASH_ATTR data_load(void);

@@ -413,7 +413,7 @@ function init() {
   $.getJSON(base_url + '/cgi/settings.json', function(data) {
     settings = data;
     $('#layers .new input').attr('maxlength', settings['layer_name_max']);
-    $('#changes').css('display', settings['unsaved_changes'] ? 'block' : 'none');    
+    $('#changes').css('display', settings['config_dirty'] ? 'block' : 'none');
   });
 
   $.getJSON(base_url + '/cgi/led/mode.json', function(data) {
@@ -441,12 +441,12 @@ function intChangeHandler(e, max) {
 
 function save_click() {
   $('#changes').css('display', 'none');
-  $.post(base_url + '/cgi/api', '[["flash","save",null]]');
+  $.post(base_url + '/cgi/api', '[["config","save",null]]');
 }
 
 function discard_click() {
   $('#changes').css('display', 'none');
-  $.post(base_url + '/cgi/api', '[["flash","load",null]]');
+  $.post(base_url + '/cgi/api', '[["config","load",null]]');
   $('#background_edit').css('display', 'none');
   $('#layer_edit').css('display', 'none');
   $('#layers ul').empty();

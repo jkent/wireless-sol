@@ -52,7 +52,7 @@ void ICACHE_FLASH_ATTR data_load(void)
 {
 	uint32_t status[2];
 
-	data_unsaved_config = false;
+	status_dirty = false;
 
 	spi_flash_read(FLASH_DATA_BLOCK0, &status[0], sizeof(status[0]));
 	spi_flash_read(FLASH_DATA_BLOCK1, &status[1], sizeof(status[1]));
@@ -97,7 +97,7 @@ void ICACHE_FLASH_ATTR data_save(void)
 	uint8_t seq = (data_config.block_status + 1) & BLOCK_STATUS_SEQ;
 	uint8_t block = (data_config.block_status & BLOCK_STATUS_NUM) ? 0 : 1;
 
-	data_unsaved_config = false;
+	config_dirty = false;
 
 	data_config.block_status = 0xFFFFFFF0 | (block ? BLOCK_STATUS_NUM : 0) | seq;
 	data_config.crc = crc32((uint8_t *)&data_config,
