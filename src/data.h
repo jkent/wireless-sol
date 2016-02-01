@@ -31,6 +31,5 @@ extern bool data_unsaved_config;
 void ICACHE_FLASH_ATTR data_init(void);
 void ICACHE_FLASH_ATTR data_load(void);
 void ICACHE_FLASH_ATTR data_save(void);
-void ICACHE_FLASH_ATTR data_test(void);
 
 #endif /* DATA_H */

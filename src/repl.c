@@ -75,28 +75,14 @@ static void ICACHE_FLASH_ATTR repl_command_data_save(char *args)
 	data_save();
 }
 
-static void ICACHE_FLASH_ATTR repl_command_data_test(char *args)
-{
-	data_test();
-}
-
 static void ICACHE_FLASH_ATTR repl_command_help(char *args)
 {
 	printf("\ndata-load");
 	printf("\ndata-save");
-	printf("\ndata-test");
-	printf("\nlayer-apply");
 	printf("\nled-set <level>");
 	printf("\nwifi-connect <ssid> [password]");
 	printf("\nwifi-disconnect");
 	printf("\nwifi-status");
-}
-
-static void ICACHE_FLASH_ATTR repl_command_layer_update(char *args)
-{
-	layer_update();
-	memcpy(led_current, led_next, flash_data.led_count);
-	led_update();
 }
 
 static void ICACHE_FLASH_ATTR repl_command_led_set(char *args)
@@ -192,9 +178,7 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_status(char *args)
 static repl_command commands[] = {
 	{ "data-load", repl_command_data_load },
 	{ "data-save", repl_command_data_save },
-	{ "data-test", repl_command_data_test },
 	{ "help", repl_command_help },
-	{ "layer-update", repl_command_layer_update },
 	{ "led-set", repl_command_led_set },
 	{ "wifi-connect", repl_command_wifi_connect },
 	{ "wifi-disconnect", repl_command_wifi_disconnect },
