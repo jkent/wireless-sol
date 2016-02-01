@@ -200,18 +200,22 @@ finish:
 
 	if (api_update) {
 		api_update = false;
-		if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
-			memset(led_next, 0, data_config.led_count);
-		} else if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
+		if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
+			memset(led_next, 0, config_data.led_count);
+		} else if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
 			layer_update();
 		}
 
-		if (0 && (data_status.led_mode & LED_MODE_FADE)) {
+		if (0 && (status_data.led_mode & LED_MODE_FADE)) {
 			/* TODO: implement & start fade timer */
 		} else {
-			memcpy(led_current, led_next, data_config.led_count);
+			memcpy(led_current, led_next, config_data.led_count);
 			led_update();
 		}
+	}
+
+	if (status_dirty) {
+		status_save();
 	}
 
 done:

@@ -67,12 +67,12 @@ static char *ICACHE_FLASH_ATTR repl_parse_args(char **args)
 
 static void ICACHE_FLASH_ATTR repl_command_data_load(char *args)
 {
-	data_load();
+	config_load();
 }
 
 static void ICACHE_FLASH_ATTR repl_command_data_save(char *args)
 {
-	data_save();
+	config_save();
 }
 
 static void ICACHE_FLASH_ATTR repl_command_help(char *args)

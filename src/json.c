@@ -20,7 +20,7 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 	case 1:
 		jsontree_write_string(path, "led_count");
 		path->putchar(':');
-		jsontree_write_int(path, data_config.led_count);
+		jsontree_write_int(path, config_data.led_count);
 		break;
 	case 2:
 		jsontree_write_string(path, "range_max");
@@ -38,9 +38,9 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 		jsontree_write_int(path, LAYER_NAME_MAX);
 		break;
 	case 5:
-		jsontree_write_string(path, "unsaved_changes");
+		jsontree_write_string(path, "config_dirty");
 		path->putchar(':');
-		jsontree_write_atom(path, data_unsaved_config ? "true" : "false");
+		jsontree_write_atom(path, config_dirty ? "true" : "false");
 		break;
 	default:
 		path->putchar('}');
@@ -63,7 +63,7 @@ static int ICACHE_FLASH_ATTR led_callback(struct jsontree_context *path)
 		path->putchar('[');
 	}
 
-	if (path->callback_state < data_config.led_count) {
+	if (path->callback_state < config_data.led_count) {
 		jsontree_write_int(path, led_current[path->callback_state++]);
 	}
 	else {
@@ -71,7 +71,7 @@ static int ICACHE_FLASH_ATTR led_callback(struct jsontree_context *path)
 		return 0;
 	}
 
-	if (path->callback_state < data_config.led_count) {
+	if (path->callback_state < config_data.led_count) {
 		path->putchar(',');
 	}
 
@@ -91,18 +91,18 @@ static int ICACHE_FLASH_ATTR led_mode_callback(struct jsontree_context *path)
 	case 0:
 		jsontree_write_string(path, "mode");
 		path->putchar(':');
-		if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
+		if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
 			jsontree_write_string(path, "off");
-		} else if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
+		} else if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
 			jsontree_write_string(path, "layer");
-		} else if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_SET) {
+		} else if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_SET) {
 			jsontree_write_string(path, "set");
 		}
 		break;
 	case 1:
 		jsontree_write_string(path, "fade");
 		path->putchar(':');
-		jsontree_write_atom(path, data_status.led_mode & LED_MODE_FADE ? "true" : "false");
+		jsontree_write_atom(path, status_data.led_mode & LED_MODE_FADE ? "true" : "false");
 		break;
 	default:
 		path->putchar('}');
@@ -133,7 +133,7 @@ static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 		return 0;
 	}
 
-	layer = &data_config.layers[path->callback_state];
+	layer = &config_data.layers[path->callback_state];
 	if (!layer->name[0]) {
 		path->putchar(']');
 		return 0;
@@ -151,7 +151,7 @@ static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 
 	jsontree_write_string(path, "enabled");
 	path->putchar(':');
-	jsontree_write_atom(path, data_status.layer_state & (1 << path->callback_state) ? "true" : "false");
+	jsontree_write_atom(path, status_data.layer_state & (1 << path->callback_state) ? "true" : "false");
 
 	path->putchar('}');
 
@@ -218,7 +218,7 @@ static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path
 {
 	uint8_t state = path->callback_state & 0xFF;
 	uint8_t substate = (path->callback_state >> 8) & 0xFF;
-	struct layer *layer = &data_config.layers[id];
+	struct layer *layer = &config_data.layers[id];
 	struct range *range;
 	char buf[LAYER_NAME_MAX+1];
 
@@ -243,7 +243,7 @@ static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path
 	case 1:
 		jsontree_write_string(path, "enabled");
 		path->putchar(':');
-		jsontree_write_atom(path, data_status.layer_state & (1 << id) ? "true" : "false");
+		jsontree_write_atom(path, status_data.layer_state & (1 << id) ? "true" : "false");
 		path->putchar(',');
 		path->callback_state++;
 		break;
@@ -306,7 +306,7 @@ const struct jsontree_callback json_layer_callback =
 
 static int ICACHE_FLASH_ATTR layer_background_callback(struct jsontree_context *path)
 {
-	jsontree_write_int(path, data_status.background);
+	jsontree_write_int(path, status_data.background);
 	return 0;
 }
 

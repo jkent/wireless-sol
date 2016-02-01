@@ -12,10 +12,10 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 		if (range->type == RANGE_TYPE_NONE) {
 			break;
 		}
-		range->lb =	(range->lb < data_config.led_count) ?
-				range->lb : data_config.led_count - 1;
-		range->ub = (range->ub < data_config.led_count) ?
-				range->ub : data_config.led_count - 1;
+		range->lb =	(range->lb < config_data.led_count) ?
+				range->lb : config_data.led_count - 1;
+		range->ub = (range->ub < config_data.led_count) ?
+				range->ub : config_data.led_count - 1;
 		if (range->lb > range->ub) {
 			uint16_t tmp = range->lb;
 			range->lb = range->ub;
@@ -60,8 +60,8 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 		if (range->type != RANGE_TYPE_COPY) {
 			continue;
 		}
-		range->value = (range->value < data_config.led_count) ?
-				range->value : data_config.led_count - 1;
+		range->value = (range->value < config_data.led_count) ?
+				range->value : config_data.led_count - 1;
 		memset(led_next + range->lb, led_next[range->value],
 				range->ub - range->lb + 1);
 	}
@@ -76,7 +76,7 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 			continue;
 		}
 		uint8_t start = (range->lb - 1 < 0) ? 0 : led_next[range->lb - 1];
-		uint8_t end = (range->ub + 1 >= data_config.led_count) ?
+		uint8_t end = (range->ub + 1 >= config_data.led_count) ?
 				0 : led_next[range->ub + 1];
 		int16_t delta = (end - start) * 100 / (range->ub - range->lb + 2);
 		uint16_t value = start * 100 + 50;
@@ -89,14 +89,14 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 
 void ICACHE_FLASH_ATTR layer_update(void)
 {
-	memset(led_next, data_status.background, data_config.led_count);
+	memset(led_next, status_data.background, config_data.led_count);
 
 	for (uint8_t i = 0; i < LAYER_MAX; i++) {
-		struct layer *layer = &data_config.layers[i];
+		struct layer *layer = &config_data.layers[i];
 		if (!layer->name[0]) {
 			break;
 		}
-		if ((data_status.layer_state >> i & 1) == 0) {
+		if ((status_data.layer_state >> i & 1) == 0) {
 			continue;
 		}
 		apply_layer(layer);
@@ -106,7 +106,7 @@ void ICACHE_FLASH_ATTR layer_update(void)
 int8_t ICACHE_FLASH_ATTR layer_find(const char *name)
 {
 	for (uint8_t i = 0; i < LAYER_MAX; i++) {
-		struct layer *layer = &data_config.layers[i];
+		struct layer *layer = &config_data.layers[i];
 		if (!layer->name[0]) {
 			break;
 		}
@@ -120,7 +120,7 @@ int8_t ICACHE_FLASH_ATTR layer_find(const char *name)
 uint8_t ICACHE_FLASH_ATTR layer_count(void)
 {
 	for (uint8_t i = 0; i < LAYER_MAX; i++) {
-		struct layer *layer = &data_config.layers[i];
+		struct layer *layer = &config_data.layers[i];
 		if (!layer->name[0]) {
 			return i;
 		}
@@ -137,12 +137,12 @@ bool ICACHE_FLASH_ATTR layer_insert(uint8_t id, struct layer *layer)
 	}
 
 	if (count && id < count) {
-		memmove(&data_config.layers[id + 1], &data_config.layers[id], sizeof(struct layer) * (count - id));
+		memmove(&config_data.layers[id + 1], &config_data.layers[id], sizeof(struct layer) * (count - id));
 	}
 
-	memcpy(&data_config.layers[id], layer, sizeof(struct layer));
+	memcpy(&config_data.layers[id], layer, sizeof(struct layer));
 
-	data_status.layer_state = bit_insert(id, data_status.layer_state);
+	status_data.layer_state = bit_insert(id, status_data.layer_state);
 	return true;
 }
 
@@ -155,16 +155,16 @@ bool ICACHE_FLASH_ATTR layer_remove(uint8_t id, struct layer *layer)
 	}
 
 	if (layer) {
-		memcpy(layer, &data_config.layers[id], sizeof(struct layer));
+		memcpy(layer, &config_data.layers[id], sizeof(struct layer));
 	}
 
 	if (id < count - 1) {
-		memmove(&data_config.layers[id], &data_config.layers[id + 1], sizeof(struct layer) * (count - id - 1));
+		memmove(&config_data.layers[id], &config_data.layers[id + 1], sizeof(struct layer) * (count - id - 1));
 	}
 
-	memset(&data_config.layers[count - 1], 0, sizeof(struct layer));
+	memset(&config_data.layers[count - 1], 0, sizeof(struct layer));
 
-	data_status.layer_state = bit_remove(id, data_status.layer_state);
+	status_data.layer_state = bit_remove(id, status_data.layer_state);
 	return true;
 }
 
@@ -182,13 +182,13 @@ bool ICACHE_FLASH_ATTR layer_move(uint8_t from, uint8_t to)
 		return true;
 	}
 
-	state = !!(data_status.layer_state & 1 << from);
+	state = !!(status_data.layer_state & 1 << from);
 
 	if (!layer_remove(from, &layer) || !layer_insert(to, &layer)) {
 		return false;
 	}
 
-	data_status.layer_state |= state ? 1 << to : 0;
+	status_data.layer_state |= state ? 1 << to : 0;
 	return true;
 }
 
@@ -216,7 +216,7 @@ bool ICACHE_FLASH_ATTR range_add(struct layer *layer, struct range *range)
 		return false;
 	}
 
-	if (range->lb > range->ub || range->ub >= data_config.led_count) {
+	if (range->lb > range->ub || range->ub >= config_data.led_count) {
 		return false;
 	}
 
