@@ -23,17 +23,32 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 		}
 	}
 
-	/* apply RANGE_TYPE_SET */
+	/* apply RANGE_TYPE_SET/ADD/SUBTRACT */
 	for (uint8_t i = 0; i < RANGE_MAX; i++) {
 		struct range *range = &layer->ranges[i];
 		if (range->type == RANGE_TYPE_NONE) {
 			break;
 		}
-		if (range->type != RANGE_TYPE_SET) {
-			continue;
+		if (range->type == RANGE_TYPE_SET) {
+			uint8_t value = range->value & 0xFF;
+			memset(led_next + range->lb, value, range->ub - range->lb + 1);
+		} else if (range->type == RANGE_TYPE_ADD) {
+			for (uint16_t j = range->lb; j <= range->ub; j++) {
+				int value = led_next[j] + range->value;
+				if (value > 255) {
+					value = 255;
+				}
+				led_next[j] = value;
+			}
+		} else if (range->type == RANGE_TYPE_SUBTRACT) {
+			for (uint16_t j = range->lb; j <= range->ub; j++) {
+				int value = led_next[j] - range->value;
+				if (value < 0) {
+					value = 0;
+				}
+				led_next[j] = value;
+			}
 		}
-		uint8_t value = range->value & 0xFF;
-		memset(led_next + range->lb, value, range->ub - range->lb + 1);
 	}
 
 	/* apply RANGE_TYPE_COPY */

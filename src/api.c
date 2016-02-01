@@ -472,6 +472,10 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 		} else if (strcmp(name, "type") == 0 && type == '"') {
 			if (jsonparse_strcmp_value(state, "set") == 0) {
 				range.type = RANGE_TYPE_SET;
+			} else if (jsonparse_strcmp_value(state, "add") == 0) {
+				range.type = RANGE_TYPE_ADD;
+			} else if (jsonparse_strcmp_value(state, "subtract") == 0) {
+				range.type = RANGE_TYPE_SUBTRACT;
 			} else if (jsonparse_strcmp_value(state, "copy") == 0) {
 				range.type = RANGE_TYPE_COPY;
 			} else if (jsonparse_strcmp_value(state, "taper") == 0) {
@@ -566,6 +570,10 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 		} else if (strcmp(name, "type") == 0 && type == '"') {
 			if (jsonparse_strcmp_value(state, "set") == 0) {
 				range.type = RANGE_TYPE_SET;
+			} else if (jsonparse_strcmp_value(state, "add") == 0) {
+				range.type = RANGE_TYPE_ADD;
+			} else if (jsonparse_strcmp_value(state, "subtract") == 0) {
+				range.type = RANGE_TYPE_SUBTRACT;
 			} else if (jsonparse_strcmp_value(state, "copy") == 0) {
 				range.type = RANGE_TYPE_COPY;
 			} else if (jsonparse_strcmp_value(state, "taper") == 0) {

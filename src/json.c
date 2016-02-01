@@ -176,6 +176,12 @@ static void ICACHE_FLASH_ATTR emit_range_object(struct jsontree_context *path, s
 	case RANGE_TYPE_SET:
 		jsontree_write_string(path, "set");
 		break;
+	case RANGE_TYPE_ADD:
+		jsontree_write_string(path, "add");
+		break;
+	case RANGE_TYPE_SUBTRACT:
+		jsontree_write_string(path, "subtract");
+		break;
 	case RANGE_TYPE_COPY:
 		jsontree_write_string(path, "copy");
 		break;
