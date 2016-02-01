@@ -5,7 +5,7 @@
 #include "led.h"
 #include "layer.h"
 
-static int settings_callback(struct jsontree_context *path)
+static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 {
 	if (path->callback_state == 0) {
 		path->putchar('{');
@@ -20,7 +20,7 @@ static int settings_callback(struct jsontree_context *path)
 	case 1:
 		jsontree_write_string(path, "led_count");
 		path->putchar(':');
-		jsontree_write_int(path, flash_data.led_count);
+		jsontree_write_int(path, data_config.led_count);
 		break;
 	case 2:
 		jsontree_write_string(path, "range_max");
@@ -58,7 +58,7 @@ static int ICACHE_FLASH_ATTR led_callback(struct jsontree_context *path)
 		path->putchar('[');
 	}
 
-	if (path->callback_state < flash_data.led_count) {
+	if (path->callback_state < data_config.led_count) {
 		jsontree_write_int(path, led_current[path->callback_state++]);
 	}
 	else {
@@ -66,7 +66,7 @@ static int ICACHE_FLASH_ATTR led_callback(struct jsontree_context *path)
 		return 0;
 	}
 
-	if (path->callback_state < flash_data.led_count) {
+	if (path->callback_state < data_config.led_count) {
 		path->putchar(',');
 	}
 
@@ -90,7 +90,7 @@ static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 		return 0;
 	}
 
-	layer = &flash_data.layers[path->callback_state];
+	layer = &data_config.layers[path->callback_state];
 	if (!layer->name[0]) {
 		path->putchar(']');
 		return 0;
@@ -108,7 +108,7 @@ static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 
 	jsontree_write_string(path, "enabled");
 	path->putchar(':');
-	jsontree_write_atom(path, flash_data.layer_state & (1 << path->callback_state) ? "true" : "false");
+	jsontree_write_atom(path, data_status.layer_state & (1 << path->callback_state) ? "true" : "false");
 
 	path->putchar('}');
 
@@ -169,7 +169,7 @@ static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path
 {
 	uint8_t state = path->callback_state & 0xFF;
 	uint8_t substate = (path->callback_state >> 8) & 0xFF;
-	struct layer *layer = &flash_data.layers[id];
+	struct layer *layer = &data_config.layers[id];
 	struct range *range;
 	char buf[LAYER_NAME_MAX+1];
 
@@ -194,7 +194,7 @@ static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path
 	case 1:
 		jsontree_write_string(path, "enabled");
 		path->putchar(':');
-		jsontree_write_atom(path, flash_data.layer_state & (1 << id) ? "true" : "false");
+		jsontree_write_atom(path, data_status.layer_state & (1 << id) ? "true" : "false");
 		path->putchar(',');
 		path->callback_state++;
 		break;

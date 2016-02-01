@@ -10,33 +10,41 @@
 #define FLASH_ERASE_SECTOR1 (FLASH_DATA_BLOCK1 >> 12)
 #define FLASH_ERASE_COUNT (FLASH_ERASE_SECTOR1 - FLASH_ERASE_SECTOR0)
 
-struct flash_data flash_data;
+struct data_config data_config;
+struct data_status data_status;
 
 static bool ICACHE_FLASH_ATTR load_block(uint8_t block)
 {
 	if (block == 0) {
-		spi_flash_read(FLASH_DATA_BLOCK0, (uint32 *)&flash_data,
-				sizeof(flash_data));
+		spi_flash_read(FLASH_DATA_BLOCK0, (uint32 *)&data_config,
+				sizeof(data_config));
 	}
 	else {
-		spi_flash_read(FLASH_DATA_BLOCK1, (uint32 *)&flash_data,
-				sizeof(flash_data));
+		spi_flash_read(FLASH_DATA_BLOCK1, (uint32 *)&data_config,
+				sizeof(data_config));
 	}
 
-	if (crc32((uint8_t *)&flash_data,
-			sizeof(flash_data) - sizeof(flash_data.crc)) != flash_data.crc) {
+	if (crc32((uint8_t *)&data_config,
+			sizeof(data_config) - sizeof(data_config.crc)) != data_config.crc) {
 		return false;
 	}
 
-	flash_data.block_status &= ~BLOCK_STATUS_NUM;
+	data_config.block_status &= ~BLOCK_STATUS_NUM;
 	if (block != 0) {
-		flash_data.block_status |= BLOCK_STATUS_NUM;
+		data_config.block_status |= BLOCK_STATUS_NUM;
 	}
 
 	os_printf("data loaded, seq %d, block %d\n",
-			flash_data.block_status & BLOCK_STATUS_SEQ, block);
+			data_config.block_status & BLOCK_STATUS_SEQ, block);
 
 	return true;
+}
+
+void ICACHE_FLASH_ATTR data_init(void)
+{
+	data_load();
+	memset(&data_status, 0, sizeof(data_status));
+	data_config.led_count = 120;
 }
 
 void ICACHE_FLASH_ATTR data_load(void)
@@ -76,35 +84,37 @@ void ICACHE_FLASH_ATTR data_load(void)
 	}
 
 init:
-	memset(&flash_data, 0, sizeof(flash_data));
-	flash_data.block_status = 0xFFFFFFF0;
+	memset(&data_config, 0, sizeof(data_config));
+	data_config.block_status = 0xFFFFFFF0;
 	os_printf("data initialized\n");
 }
 
 void ICACHE_FLASH_ATTR data_save(void)
 {
-	uint8_t seq = (flash_data.block_status + 1) & BLOCK_STATUS_SEQ;
-	uint8_t block = (flash_data.block_status & BLOCK_STATUS_NUM) ? 0 : 1;
+	uint8_t seq = (data_config.block_status + 1) & BLOCK_STATUS_SEQ;
+	uint8_t block = (data_config.block_status & BLOCK_STATUS_NUM) ? 0 : 1;
 
-	flash_data.block_status = 0xFFFFFFF0 | (block ? BLOCK_STATUS_NUM : 0) | seq;
-	flash_data.crc = crc32((uint8_t *)&flash_data,
-			sizeof(flash_data) - sizeof(flash_data.crc));
+	data_unsaved_config = false;
+
+	data_config.block_status = 0xFFFFFFF0 | (block ? BLOCK_STATUS_NUM : 0) | seq;
+	data_config.crc = crc32((uint8_t *)&data_config,
+			sizeof(data_config) - sizeof(data_config.crc));
 
 	if (block == 0) {
 		for (uint16 sector = FLASH_ERASE_SECTOR0;
 				sector < FLASH_ERASE_SECTOR0 + FLASH_ERASE_COUNT; sector++) {
 			spi_flash_erase_sector(sector);
 		}
-		spi_flash_write(FLASH_DATA_BLOCK0, (uint32 *)&flash_data,
-				sizeof(flash_data));
+		spi_flash_write(FLASH_DATA_BLOCK0, (uint32 *)&data_config,
+				sizeof(data_config));
 	}
 	else {
 		for (uint16 sector = FLASH_ERASE_SECTOR1;
 				sector < FLASH_ERASE_SECTOR1 + FLASH_ERASE_COUNT; sector++) {
 			spi_flash_erase_sector(sector);
 		}
-		spi_flash_write(FLASH_DATA_BLOCK1, (uint32 *)&flash_data,
-				sizeof(flash_data));
+		spi_flash_write(FLASH_DATA_BLOCK1, (uint32 *)&data_config,
+				sizeof(data_config));
 	}
 }
 

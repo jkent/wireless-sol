@@ -57,12 +57,12 @@ void ICACHE_FLASH_ATTR led_init(void)
 	GPIO_OUTPUT_SET(5, 0);
 
 	/* Init data */
-	if ((flash_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
+	if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
 		layer_update();
-		memcpy(led_current, led_next, flash_data.led_count);
+		memcpy(led_current, led_next, data_config.led_count);
 	} else {
-		memset(led_current, 0, flash_data.led_count);
-		flash_data.led_mode = LED_MODE_OFF;
+		memset(led_current, 0, data_config.led_count);
+		data_status.led_mode = LED_MODE_OFF;
 	}
 
 	/* Reset LEDs */
@@ -88,7 +88,7 @@ void led_update(void)
 	t1h = (1000 * system_get_cpu_freq()) / 1250; // 0.8us
 	ttot = (1000 * system_get_cpu_freq()) / 800; // 1.25us
 
-	for (i = 0; i < flash_data.led_count; i++) {
+	for (i = 0; i < data_config.led_count; i++) {
 		byte = linear_map[led_current[i]];
 		ets_intr_lock();
 		for (component = 0; component < 3; component++) {

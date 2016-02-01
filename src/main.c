@@ -94,7 +94,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 	os_printf("\nstarting up\n");
 	printf("\nWireless Sol");
 
-	data_load();
+	data_init();
 	gpio_init();
 	led_init();
 

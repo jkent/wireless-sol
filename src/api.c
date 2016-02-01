@@ -50,9 +50,9 @@ static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state,
 	}
 
 	if (strcmp(action, "disable") == 0) {
-		flash_data.layer_state &= ~(1 << layer_id);
+		data_status.layer_state &= ~(1 << layer_id);
 	} else if (strcmp(action, "enable") == 0) {
-		flash_data.layer_state |= 1 << layer_id;
+		data_status.layer_state |= 1 << layer_id;
 	}
 
 	api_update = true;
@@ -254,7 +254,7 @@ static int ICACHE_FLASH_ATTR layer_rename_handler(struct jsonparse_state *state,
 		return API_FAIL;
 	}
 
-	layer = &flash_data.layers[layer_id];
+	layer = &data_config.layers[layer_id];
 
 	if (strcmp(layer->name, new) == 0) {
 		return API_OK;
@@ -274,7 +274,7 @@ static int ICACHE_FLASH_ATTR layer_background_set_handler(struct jsonparse_state
 	int value;
 	char type;
 
-	value = flash_data.background;
+	value = data_status.background;
 
 	if (jsonparse_next(state) != '{') {
 		return API_ERROR_PARSE;
@@ -301,7 +301,7 @@ static int ICACHE_FLASH_ATTR layer_background_set_handler(struct jsonparse_state
 		}
 	}
 
-	flash_data.background = value;
+	data_status.background = value;
 	api_update = true;
 	return API_OK;
 }
@@ -340,7 +340,7 @@ static int ICACHE_FLASH_ATTR led_set_handler(struct jsonparse_state *state, cons
 					return API_ERROR_PARSE;
 				}
 
-				if (i >= flash_data.led_count) {
+				if (i >= data_config.led_count) {
 					return API_FAIL;
 				}
 
@@ -352,7 +352,7 @@ static int ICACHE_FLASH_ATTR led_set_handler(struct jsonparse_state *state, cons
 				values[i++] = value;
 			}
 
-			if (i < flash_data.led_count) {
+			if (i < data_config.led_count) {
 				return API_FAIL;
 			}
 		} else {
@@ -360,7 +360,7 @@ static int ICACHE_FLASH_ATTR led_set_handler(struct jsonparse_state *state, cons
 		}
 	}
 
-	memcpy(led_next, values, flash_data.led_count);
+	memcpy(led_next, values, data_config.led_count);
 	api_update = true;
 	return API_OK;
 }
@@ -371,7 +371,7 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 	uint8_t mode;
 	char type;
 
-	mode = flash_data.led_mode;
+	mode = data_status.led_mode;
 
 	if (jsonparse_next(state) != '{') {
 		return API_ERROR_PARSE;
@@ -411,7 +411,7 @@ static int ICACHE_FLASH_ATTR led_mode_set_handler(struct jsonparse_state *state,
 		}
 	}
 
-	flash_data.led_mode = mode;
+	data_status.led_mode = mode;
 	api_update = true;
 	return API_OK;
 }
@@ -484,7 +484,7 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 		return API_FAIL;
 	}
 
-	layer = &flash_data.layers[layer_id];
+	layer = &data_config.layers[layer_id];
 
 	if (!have_type || !have_lb || !have_ub ) {
 		return API_ERROR_PARSE;
@@ -498,7 +498,7 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 		return API_FAIL;
 	}
 
-	if (flash_data.layer_state & 1 << layer_id) {
+	if (data_status.layer_state & 1 << layer_id) {
 		api_update = true;
 	}
 
@@ -577,7 +577,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 		return API_FAIL;
 	}
 
-	layer = &flash_data.layers[layer_id];
+	layer = &data_config.layers[layer_id];
 
 	count = range_count(layer);
 
@@ -605,7 +605,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 		range.value = layer->ranges[range_id].value;
 	}
 
-	if (range.lb > range.ub || range.ub >= flash_data.led_count) {
+	if (range.lb > range.ub || range.ub >= data_config.led_count) {
 		return API_FAIL;
 	}
 
@@ -619,7 +619,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 
 	memcpy(&layer->ranges[range_id], &range, sizeof(struct range));
 
-	if (flash_data.layer_state & 1 << layer_id) {
+	if (data_status.layer_state & 1 << layer_id) {
 		api_update = true;
 	}
 
@@ -673,13 +673,13 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 		return API_FAIL;
 	}
 
-	layer = &flash_data.layers[layer_id];
+	layer = &data_config.layers[layer_id];
 
 	if (!range_remove(layer, range_id, NULL)) {
 		return API_FAIL;
 	}
 
-	if (flash_data.layer_state & 1 << layer_id) {
+	if (data_status.layer_state & 1 << layer_id) {
 		api_update = true;
 	}
 
