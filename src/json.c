@@ -81,6 +81,44 @@ static int ICACHE_FLASH_ATTR led_callback(struct jsontree_context *path)
 const struct jsontree_callback json_led_callback =
 	JSONTREE_CALLBACK(led_callback, NULL);
 
+static int ICACHE_FLASH_ATTR led_mode_callback(struct jsontree_context *path)
+{
+	if (path->callback_state == 0) {
+		path->putchar('{');
+	}
+
+	switch (path->callback_state++) {
+	case 0:
+		jsontree_write_string(path, "mode");
+		path->putchar(':');
+		if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
+			jsontree_write_string(path, "off");
+		} else if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
+			jsontree_write_string(path, "layer");
+		} else if ((data_status.led_mode & ~LED_MODE_FADE) == LED_MODE_SET) {
+			jsontree_write_string(path, "set");
+		}
+		break;
+	case 1:
+		jsontree_write_string(path, "fade");
+		path->putchar(':');
+		jsontree_write_atom(path, data_status.led_mode & LED_MODE_FADE ? "true" : "false");
+		break;
+	default:
+		path->putchar('}');
+		return 0;
+	}
+
+	if (path->callback_state < 2) {
+		path->putchar(',');
+	}
+
+	return 1;
+}
+
+const struct jsontree_callback json_led_mode_callback =
+	JSONTREE_CALLBACK(led_mode_callback, NULL);
+
 static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 {
 	struct layer *layer;
@@ -259,3 +297,12 @@ static int ICACHE_FLASH_ATTR layer_callback(struct jsontree_context *path)
 
 const struct jsontree_callback json_layer_callback =
 	JSONTREE_CALLBACK(layer_callback, NULL);
+
+static int ICACHE_FLASH_ATTR layer_background_callback(struct jsontree_context *path)
+{
+	jsontree_write_int(path, data_status.background);
+	return 0;
+}
+
+const struct jsontree_callback json_layer_background_callback =
+	JSONTREE_CALLBACK(layer_background_callback, NULL);
