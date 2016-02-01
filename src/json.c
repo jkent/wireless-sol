@@ -37,12 +37,17 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 		path->putchar(':');
 		jsontree_write_int(path, LAYER_NAME_MAX);
 		break;
+	case 5:
+		jsontree_write_string(path, "unsaved_changes");
+		path->putchar(':');
+		jsontree_write_atom(path, data_unsaved_config ? "true" : "false");
+		break;
 	default:
 		path->putchar('}');
 		return 0;
 	}
 
-	if (path->callback_state < 5) {
+	if (path->callback_state < 6) {
 		path->putchar(',');
 	}
 

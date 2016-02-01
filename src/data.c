@@ -12,6 +12,7 @@
 
 struct data_config data_config;
 struct data_status data_status;
+bool data_unsaved_config;
 
 static bool ICACHE_FLASH_ATTR load_block(uint8_t block)
 {
@@ -50,6 +51,8 @@ void ICACHE_FLASH_ATTR data_init(void)
 void ICACHE_FLASH_ATTR data_load(void)
 {
 	uint32_t status[2];
+
+	data_unsaved_config = false;
 
 	spi_flash_read(FLASH_DATA_BLOCK0, &status[0], sizeof(status[0]));
 	spi_flash_read(FLASH_DATA_BLOCK1, &status[1], sizeof(status[1]));

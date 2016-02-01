@@ -26,6 +26,7 @@ struct data_status {
 
 extern struct data_config data_config;
 extern struct data_status data_status;
+extern bool data_unsaved_config;
 
 void ICACHE_FLASH_ATTR data_init(void);
 void ICACHE_FLASH_ATTR data_load(void);

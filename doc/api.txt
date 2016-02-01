@@ -9,6 +9,9 @@ commands executed okay, or false if one or more commands failed.
 
 Below is a list of all calls and data expected.
 
+var path = "flash"; var action = "save"/"load";
+var data = null;
+
 var path = "layer"; var action = "enable"/"disable";
 var data = {
   "layer": <str>/<uint>

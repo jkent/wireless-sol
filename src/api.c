@@ -6,6 +6,20 @@
 
 bool api_update = false;
 
+static int ICACHE_FLASH_ATTR flash_save_handler(struct jsonparse_state *state, const char *action)
+{
+	if (strcmp(action, "load") == 0) {
+		data_load();
+	} else if (strcmp(action, "save") == 0) {
+		data_save();
+	} else {
+		return API_FAIL;
+	}
+
+	data_unsaved_config = false;
+	return API_OK;
+}
+
 static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state, const char *action)
 {
 	char name[LAYER_NAME_MAX + 1];
@@ -112,6 +126,7 @@ static int ICACHE_FLASH_ATTR layer_insert_handler(struct jsonparse_state *state,
 		return API_FAIL;
 	}
 
+	data_unsaved_config = true;
 	return API_OK;
 }
 
@@ -159,6 +174,7 @@ static int ICACHE_FLASH_ATTR layer_move_handler(struct jsonparse_state *state, c
 	}
 
 	api_update = true;
+	data_unsaved_config = true;
 	return API_OK;
 }
 
@@ -202,6 +218,7 @@ static int ICACHE_FLASH_ATTR layer_remove_handler(struct jsonparse_state *state,
 	}
 
 	api_update = true;
+	data_unsaved_config = true;
 	return API_OK;
 }
 
@@ -265,6 +282,7 @@ static int ICACHE_FLASH_ATTR layer_rename_handler(struct jsonparse_state *state,
 	}
 
 	strncpy(layer->name, new, sizeof(layer->name));
+	data_unsaved_config = true;
 	return API_OK;
 }
 
@@ -502,6 +520,7 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 		api_update = true;
 	}
 
+	data_unsaved_config = true;
 	return API_OK;
 }
 
@@ -623,6 +642,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 		api_update = true;
 	}
 
+	data_unsaved_config = true;
 	return API_OK;
 }
 
@@ -683,10 +703,13 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 		api_update = true;
 	}
 
+	data_unsaved_config = true;
 	return API_OK;
 }
 
 static struct api_handler handlers[] = {
+	{"flash", "load", flash_save_handler},
+	{"flash", "save", flash_save_handler},
 	{"layer", "disable", layer_enable_handler},
 	{"layer", "enable", layer_enable_handler},
 	{"layer", "insert", layer_insert_handler},
