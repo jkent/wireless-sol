@@ -56,15 +56,10 @@
       border-bottom: 1px solid black;
       line-height: 1.5em;
     }
-    #settings form, #modes form {
+    #settings form, #modes form, #layers form {
       line-height: 1.5em;
-      margin: 0.6em;
-    }
-    #layers .background {
+      padding: 0.6em;
       background-color: #ffc;
-      text-align: center;
-      padding: 0 1.75em 0 2.65em;
-      line-height: 1.5em;
     }
     #layers ul {
       list-style-type: none;
@@ -116,7 +111,7 @@
     #multirange {
       display: inline-block;
     }
-    #layer_edit, #background_edit {
+    #layer_edit {
       position: absolute;
       top: 5em;
       margin-left: 14.75em;
@@ -125,20 +120,21 @@
       background-color: #ffc;
       min-width:40em;
     }
-    #layer_edit .heading, #background_edit .heading {
+    #layer_edit .heading {
       text-align: center;
       background-color: #fc0;
       border-bottom: 1px solid black;
       font-weight: bold;
       line-height: 1.5em;
     }
-    #layer_edit .box, #background_edit .box {
+    #layer_edit .box {
       padding: 0.5em;
     }
-    #layer_edit form, #background_edit form {
+    #layer_edit form {
       line-height: 1.75em;
     }
-    #layer_edit label, #background_edit label, #settings label, #modes label {
+    #layer_edit label, #settings label, #modes label, #layers label {
+      font-size: 85%;
       display: inline-block;
       width: 5em;
     }
@@ -163,7 +159,7 @@
   <div class="heading">Settings</div>
   <form onsubmit="return false;">
     <label for="ledcount">LED count</label>
-    <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" onkeydown="ledcount_keydown(this)" />
+    <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" onkeydown="ledcount_keydown(this)" autocomplete="off" />
   </form>
 </div>
 
@@ -183,19 +179,12 @@
 
 <div id="layers">
   <div class="heading">Layers</div>
-  <div class="background"><a href="#" onclick="background_edit()">background</a></div>
+  <form onsubmit="return false;">
+    <label for="background">Background</label>
+    <input class="backgroundtext" name="background" type="text" size="4" maxlength="3" onchange="intChangeHandler(this, 255)" onkeydown="background_keydown(this)" autocomplete="off" />
+  </form>
   <ul></ul>
-  <div class="new"><span>New:</span><input type="text" onkeydown="layers_new_edit_keydown(this)" /></div>
-</div>
-
-<div id="background_edit" style="display:none;">
-  <div class="heading">Layer: background</div>
-  <div class="box">
-    <form id="background" onsubmit="return false;">
-      <label for="value">Value</label><input class="valuetext" name="value" type="text" size="3" maxlength="3" onchange="intChangeHandler(this, 255)" /><br />
-      <button class="updatebtn" onclick="background_update()">Update</button>
-    </form>
-  </div>
+  <div class="new"><span>New</span><input type="text" onkeydown="layers_new_edit_keydown(this)" autocomplete="off" /></div>
 </div>
 
 <div id="layer_edit" style="display:none;">
@@ -210,7 +199,7 @@
         <option value="subtract">Subtract</option>
         <option value="taper">Taper</option>
       </select><br />
-      <label for="value">Value</label><input class="valuetext" name="value" type="text" size="5" maxlength="5" onchange="intChangeHandler(this, 65535)"/><br />
+      <label for="value">Value</label><input class="valuetext" name="value" type="text" size="5" maxlength="5" onchange="intChangeHandler(this, 65535)" autocomplete="off" /><br />
       <button class="addbtn" onclick="range_add()">Add</button>
       <button class="updatebtn" onclick="multirange.update()">Update</button>
       <button class="removebtn" onclick="multirange.remove()">Remove</button>
@@ -234,7 +223,6 @@ function save_click() {
 function discard_click() {
   $('#changes').css('display', 'none');
   $.post(base_url + '/cgi/api', '[["config","load",null]]');
-  $('#background_edit').css('display', 'none');
   $('#layer_edit').css('display', 'none');
   $('#layers ul').empty();
   init();
@@ -268,17 +256,12 @@ function fade_change(e) {
   $.post(base_url + '/cgi/api', '[["led.mode","set",' + JSON.stringify(data) + ']]');
 }
 
-function background_edit() {
-  $('#layer_edit').css('display', 'none');
-  $.getJSON(base_url + '/cgi/layer/background.json', function(data) {
-    $('#background .valuetext').val(data);
-    $('#background_edit').css('display', 'block');
-  });
-}
-
-function background_update() {
-  data = {'value': Number($('#background .valuetext').val())};
-  $.post(base_url + '/cgi/api', '[["layer.background","set",' + JSON.stringify(data) + ']]');
+function background_keydown(e) {
+  if(event.keyCode == 13) {
+    intChangeHandler(e, 255);
+    data = {'value': Number(e.value)};
+    $.post(base_url + '/cgi/api', '[["layer.background","set",' + JSON.stringify(data) + ']]');
+  }
 }
 
 function layers_add(n) {
@@ -286,7 +269,6 @@ function layers_add(n) {
 }
 
 function layers_edit_click(e) {
-  $('#background_edit').css('display', 'none');
   $('#layers li').each(function(i) {
     if ($.contains(this, e)) {
       if (multirange) {
@@ -462,6 +444,10 @@ function init() {
       $.post(base_url + '/cgi/api', '[["layer","move",' + JSON.stringify(data) + ']]');
       $('#changes').css('display', 'block');
     }
+  });
+
+  $.getJSON(base_url + '/cgi/layer/background.json', function(data) {
+    $('#layers .backgroundtext').val(data);
   });
 
   $.getJSON(base_url + '/cgi/settings.json', function(data) {
