@@ -151,7 +151,7 @@ static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 
 	jsontree_write_string(path, "enabled");
 	path->putchar(':');
-	jsontree_write_atom(path, status_data.layer_state & (1 << path->callback_state) ? "true" : "false");
+	jsontree_write_atom(path, status_data.layers & (1 << path->callback_state) ? "true" : "false");
 
 	path->putchar('}');
 
@@ -243,7 +243,7 @@ static int ICACHE_FLASH_ATTR layer_object_callback(struct jsontree_context *path
 	case 1:
 		jsontree_write_string(path, "enabled");
 		path->putchar(':');
-		jsontree_write_atom(path, status_data.layer_state & (1 << id) ? "true" : "false");
+		jsontree_write_atom(path, status_data.layers & (1 << id) ? "true" : "false");
 		path->putchar(',');
 		path->callback_state++;
 		break;

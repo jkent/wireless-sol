@@ -62,9 +62,9 @@ static int ICACHE_FLASH_ATTR layer_enable_handler(struct jsonparse_state *state,
 	}
 
 	if (strcmp(action, "disable") == 0) {
-		status_data.layer_state &= ~(1 << layer_id);
+		status_data.layers &= ~(1 << layer_id);
 	} else if (strcmp(action, "enable") == 0) {
-		status_data.layer_state |= 1 << layer_id;
+		status_data.layers |= 1 << layer_id;
 	}
 
 	api_update = true;
@@ -523,7 +523,7 @@ static int ICACHE_FLASH_ATTR range_add_handler(struct jsonparse_state *state, co
 		return API_FAIL;
 	}
 
-	if (status_data.layer_state & 1 << layer_id) {
+	if (status_data.layers & 1 << layer_id) {
 		api_update = true;
 	}
 
@@ -649,7 +649,7 @@ static int ICACHE_FLASH_ATTR range_edit_handler(struct jsonparse_state *state, c
 
 	memcpy(&layer->ranges[range_id], &range, sizeof(struct range));
 
-	if (status_data.layer_state & 1 << layer_id) {
+	if (status_data.layers & 1 << layer_id) {
 		api_update = true;
 	}
 
@@ -710,7 +710,7 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 		return API_FAIL;
 	}
 
-	if (status_data.layer_state & 1 << layer_id) {
+	if (status_data.layers & 1 << layer_id) {
 		api_update = true;
 	}
 

@@ -112,7 +112,7 @@ void ICACHE_FLASH_ATTR layer_update(void)
 		if (!layer->name[0]) {
 			break;
 		}
-		if ((status_data.layer_state >> i & 1) == 0) {
+		if ((status_data.layers >> i & 1) == 0) {
 			continue;
 		}
 		apply_layer(layer);
@@ -158,7 +158,7 @@ bool ICACHE_FLASH_ATTR layer_insert(uint8_t id, struct layer *layer)
 
 	memcpy(&config_data.layers[id], layer, sizeof(struct layer));
 
-	status_data.layer_state = bit_insert(id, status_data.layer_state);
+	status_data.layers = bit_insert(id, status_data.layers);
 	return true;
 }
 
@@ -180,7 +180,7 @@ bool ICACHE_FLASH_ATTR layer_remove(uint8_t id, struct layer *layer)
 
 	memset(&config_data.layers[count - 1], 0, sizeof(struct layer));
 
-	status_data.layer_state = bit_remove(id, status_data.layer_state);
+	status_data.layers = bit_remove(id, status_data.layers);
 	return true;
 }
 
@@ -198,13 +198,13 @@ bool ICACHE_FLASH_ATTR layer_move(uint8_t from, uint8_t to)
 		return true;
 	}
 
-	state = !!(status_data.layer_state & 1 << from);
+	state = !!(status_data.layers & 1 << from);
 
 	if (!layer_remove(from, &layer) || !layer_insert(to, &layer)) {
 		return false;
 	}
 
-	status_data.layer_state |= state ? 1 << to : 0;
+	status_data.layers |= state ? 1 << to : 0;
 	return true;
 }
 
