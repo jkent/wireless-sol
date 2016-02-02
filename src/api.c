@@ -718,6 +718,47 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 	return API_OK;
 }
 
+static int ICACHE_FLASH_ATTR settings_set_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[10];
+	uint16_t led_count;
+	char type;
+
+	led_count = config_data.led_count;
+
+	if (jsonparse_next(state) != '{') {
+		return API_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			return API_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "led_count") == 0 && type == '0') {
+			led_count = jsonparse_get_value_as_int(state);
+		} else {
+			return API_ERROR_PARSE;
+		}
+	}
+
+	if (led_count > LED_MAX) {
+		return API_FAIL;
+	}
+
+	config_data.led_count = led_count;
+
+	api_update = true;
+	config_dirty = true;
+	return API_OK;
+}
+
 static struct api_handler handlers[] = {
 	{"config", "load", config_save_handler},
 	{"config", "save", config_save_handler},
@@ -733,6 +774,7 @@ static struct api_handler handlers[] = {
 	{"range", "add", range_add_handler},
 	{"range", "edit", range_edit_handler},
 	{"range", "remove", range_remove_handler},
+	{"settings", "set", settings_set_handler},
 	{NULL}
 };
 

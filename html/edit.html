@@ -6,7 +6,7 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.4.2/Sortable.min.js"></script>
   <script src="https://cdn.rawgit.com/konvajs/konva/0.10.0/konva.min.js"></script>
-  <script src="sol.js"></script>
+  <script src="multirange.js"></script>
   <style>
     body {
       background-color: lightblue;
@@ -33,27 +33,30 @@
       top: -0.25em;
       padding-left: 2.5em;
     }
-    #modes, #layers {
+    #settings, #modes, #layers {
       position: absolute;
       width: 14em;
       border: 1px solid black;
       background-color: #ffc;
     }
-    #modes {
+    #settings {
       top: 5em;
     }
+    #modes {
+      top: 10em;
+    }
     #layers {
-      top: 11.5em;
+      top: 16.5em;
       background-color: black;
     }
-    #modes .heading, #layers .heading {
+    #settings .heading, #modes .heading, #layers .heading {
       font-weight: bold;
       background-color: #fc0;
       text-align: center;
       border-bottom: 1px solid black;
       line-height: 1.5em;
     }
-    #modes form {
+    #settings form, #modes form {
       line-height: 1.5em;
       margin: 0.6em;
     }
@@ -135,9 +138,9 @@
     #layer_edit form, #background_edit form {
       line-height: 1.75em;
     }
-    #layer_edit label, #background_edit label, #modes label {
+    #layer_edit label, #background_edit label, #settings label, #modes label {
       display: inline-block;
-      width: 4em;
+      width: 5em;
     }
   </style>
 
@@ -156,15 +159,25 @@
  <h1>Wireless Sol</h1>
 </div>
 
+<div id="settings">
+  <div class="heading">Settings</div>
+  <form onsubmit="return false;">
+    <label for="ledcount">LED count</label>
+    <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" onkeydown="ledcount_keydown(this)" />
+  </form>
+</div>
+
 <div id="modes">
   <div class="heading">Modes</div>
-  <form>
-    <label for="mode">Mode</label><select class="modesel" name="mode" onchange="mode_change(this)">
+  <form onsubmit="return false;">
+    <label for="mode">Mode</label>
+    <select class="modesel" name="mode" onchange="mode_change(this)">
       <option value="off">Off</option>
       <option value="layer">Layer</option>
       <option value="set">Set</option>
     </select><br />
-    <label for="fade">Fade</label><input class="fadecheck" name="fade" type="checkbox" onchange="fade_change(this)" />
+    <label for="fade">Fade</label>
+    <input class="fadecheck" name="fade" type="checkbox" onchange="fade_change(this)" />
   </form>
 </div>
 
@@ -178,7 +191,7 @@
 <div id="background_edit" style="display:none;">
   <div class="heading">Layer: background</div>
   <div class="box">
-    <form id="background"  onsubmit="return false;">
+    <form id="background" onsubmit="return false;">
       <label for="value">Value</label><input class="valuetext" name="value" type="text" size="3" maxlength="3" onchange="intChangeHandler(this, 255)" /><br />
       <button class="updatebtn" onclick="background_update()">Update</button>
     </form>
@@ -212,6 +225,38 @@ var layer = -1;
 var ranges;
 var settings;
 var multirange;
+
+function save_click() {
+  $('#changes').css('display', 'none');
+  $.post(base_url + '/cgi/api', '[["config","save",null]]');
+}
+
+function discard_click() {
+  $('#changes').css('display', 'none');
+  $.post(base_url + '/cgi/api', '[["config","load",null]]');
+  $('#background_edit').css('display', 'none');
+  $('#layer_edit').css('display', 'none');
+  $('#layers ul').empty();
+  init();
+}
+
+function ledcount_change(e) {
+  e.value = Number(e.value);
+  if (e.value < 0 || e.value == 'NaN') {
+    e.value = 0;
+  } else if (e.value > settings['led_max']) {
+    e.value = settings['led_max'];
+  }
+}
+
+function ledcount_keydown(e) {
+  if(event.keyCode == 13) {
+    ledcount_change(e);
+    data = {'led_count': Number(e.value)};
+    $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
+    $('#changes').css('display', 'block');
+  }
+}
 
 function mode_change(e) {
   data = {'mode': e.value};
@@ -389,6 +434,15 @@ function layers_new_edit_keydown(e) {
   }
 }
 
+function intChangeHandler(e, max) {
+  e.value = Number(e.value);
+  if (e.value < 0 || e.value == 'NaN') {
+    e.value = 0;
+  } else if (e.value > max) {
+    e.value = max;
+  }
+}
+
 function init() {
   Sortable.create($('#layers ul')[0], {
     animation: 150,
@@ -412,8 +466,9 @@ function init() {
 
   $.getJSON(base_url + '/cgi/settings.json', function(data) {
     settings = data;
+    $('#settings .ledcounttext').val(settings['led_count']);
     $('#layers .new input').attr('maxlength', settings['layer_name_max']);
-    $('#changes').css('display', settings['config_dirty'] ? 'block' : 'none');
+    $('#changes').css('display', settings['unsaved_changes'] ? 'block' : 'none');    
   });
 
   $.getJSON(base_url + '/cgi/led/mode.json', function(data) {
@@ -429,29 +484,6 @@ function init() {
   });
 }
 $(init);
-
-function intChangeHandler(e, max) {
-  e.value = Number(e.value);
-  if (e.value < 0 || e.value == 'NaN') {
-    e.value = 0;
-  } else if (e.value > max) {
-    e.value = max;
-  }
-}
-
-function save_click() {
-  $('#changes').css('display', 'none');
-  $.post(base_url + '/cgi/api', '[["config","save",null]]');
-}
-
-function discard_click() {
-  $('#changes').css('display', 'none');
-  $.post(base_url + '/cgi/api', '[["config","load",null]]');
-  $('#background_edit').css('display', 'none');
-  $('#layer_edit').css('display', 'none');
-  $('#layers ul').empty();
-  init();
-}
 </script>
 
 </body>

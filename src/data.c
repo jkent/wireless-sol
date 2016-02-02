@@ -78,9 +78,6 @@ void ICACHE_FLASH_ATTR data_init(void)
 {
 	config_load();
 	status_load();
-
-	/* temporary override */
-	config_data.led_count = 120;
 }
 
 void ICACHE_FLASH_ATTR config_load(void)
