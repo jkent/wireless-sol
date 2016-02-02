@@ -4,6 +4,22 @@
 #include "data.h"
 #include "util.h"
 
+void ICACHE_FLASH_ATTR master_update(bool fade)
+{
+	if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
+		memset(led_next, 0, config_data.led_count);
+	} else if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
+		layer_update();
+	}
+
+	if (0 && fade && (status_data.led_mode & LED_MODE_FADE)) {
+		/* TODO: implement & start fade timer */
+	} else {
+		memcpy(led_current, led_next, config_data.led_count);
+		led_update();
+	}
+}
+
 static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 {
 	/* validate ranges */

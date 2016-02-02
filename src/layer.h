@@ -29,6 +29,7 @@ struct layer {
 	struct range ranges[RANGE_MAX];
 };
 
+void ICACHE_FLASH_ATTR master_update(bool fade);
 void ICACHE_FLASH_ATTR layer_update(void);
 int8_t ICACHE_FLASH_ATTR layer_find(const char *name);
 uint8_t ICACHE_FLASH_ATTR layer_count(void);

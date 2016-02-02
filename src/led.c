@@ -56,17 +56,10 @@ void ICACHE_FLASH_ATTR led_init(void)
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
 	GPIO_OUTPUT_SET(5, 0);
 
-	/* Init data */
-	if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
-		layer_update();
-		memcpy(led_current, led_next, config_data.led_count);
-	} else {
-		memset(led_current, 0, config_data.led_count);
-		status_data.led_mode = LED_MODE_OFF;
-	}
+	/* Init LED data */
+	master_update(false);
 
-	/* Reset LEDs */
-	led_update();
+	/* Wait for refresh */
 	start_time = _getCycleCount();
 	res = (1000 * system_get_cpu_freq()) / 20; // 50us
 	while ((_getCycleCount() - start_time) < res)
