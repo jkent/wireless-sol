@@ -69,6 +69,16 @@ Sol.Multirange = function (options) {
           t.o.change_func('select', {lb: t.lb, ub: t.ub});
         }
       }
+
+      if (t.ub - t.lb > 0) {
+        t.text.visible(true);
+      } else {
+        t.text.visible(false);
+      }
+
+      t.text.text(t.ub - t.lb + 1);
+      t.text.position({x: t.o.border + (t.detent * t.lb + t.o.index_size + t.o.item_size + t.detent * t.ub) / 2});
+
       return {
         x: t.o.border + t.detent * t.lb,
         y: this.getAbsolutePosition().y
@@ -104,6 +114,16 @@ Sol.Multirange = function (options) {
           t.o.change_func('select', {lb: t.lb, ub: t.ub});
         }
       }
+
+      if (t.ub - t.lb > 0) {
+        t.text.visible(true);
+      } else {
+        t.text.visible(false);
+      }
+
+      t.text.text(t.ub - t.lb + 1);
+      t.text.position({x: t.o.border + (t.detent * t.lb + t.o.index_size + t.o.item_size + t.detent * t.ub) / 2});
+
       return {
         x: t.o.border + t.o.index_size + t.o.item_size + t.detent * t.ub,
         y: this.getAbsolutePosition().y
@@ -128,6 +148,15 @@ Sol.Multirange = function (options) {
   this.ubindex.on('mouseout', function() {
       document.body.style.cursor = 'default';
   });
+
+  this.text = new Konva.Text({
+    text: 0,
+    align: 'center',
+    x: 0,
+    y: this.o.border + this.o.marker_height + this.o.gap + this.o.item_size + this.o.gap,
+    visible: false
+  });
+  this.layer.add(this.text);
 
   this.ranges = [];
   this._update_hotspots();
@@ -217,6 +246,7 @@ Sol.Multirange.prototype._update_hotspots = function() {
 Sol.Multirange.prototype._select = function(range) {
   this.lbindex.visible(true);
   this.ubindex.visible(true);
+  this.text.visible(true);
 
   this.lb = range.lb;
   this.ub = range.ub;
@@ -227,6 +257,9 @@ Sol.Multirange.prototype._select = function(range) {
   if (typeof this.o.change_func == 'function') {
     this.o.change_func('select', {lb: this.lb, ub: this.ub});
   }
+
+  this.text.text(this.ub - this.lb + 1);
+  this.text.position({x: this.o.border + (this.detent * this.lb + this.o.index_size + this.o.item_size + this.detent * this.ub) / 2});
 
   this.layer.draw();
 }
@@ -263,6 +296,7 @@ Sol.Multirange.prototype.range_add = function(range, deselect) {
     }
     this.lbindex.visible(false);
     this.ubindex.visible(false);
+    this.text.visible(false);
   }
 
   range.marker = new Konva.Line({
@@ -328,6 +362,7 @@ Sol.Multirange.prototype.range_remove = function(i) {
 
   this.lbindex.visible(false);
   this.ubindex.visible(false);
+  this.text.visible(false);
 
   this.ranges.splice(i, 1);
   range.marker.destroy();
