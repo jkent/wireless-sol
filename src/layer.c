@@ -150,6 +150,10 @@ bool ICACHE_FLASH_ATTR layer_insert(uint8_t id, struct layer *layer)
 	memcpy(&config_data.layers[id], layer, sizeof(struct layer));
 
 	status_data.layers = bit_insert(id, status_data.layers);
+	for (int i = 0; i < config_data.preset_count; i++) {
+		config_data.presets[i].layers = bit_insert(id, config_data.presets[i].layers);
+	}
+
 	return true;
 }
 
@@ -172,6 +176,10 @@ bool ICACHE_FLASH_ATTR layer_remove(uint8_t id, struct layer *layer)
 	memset(&config_data.layers[count - 1], 0, sizeof(struct layer));
 
 	status_data.layers = bit_remove(id, status_data.layers);
+	for (int i = 0; i < config_data.preset_count; i++) {
+		config_data.presets[i].layers = bit_remove(id, config_data.presets[i].layers);
+	}
+
 	return true;
 }
 
@@ -180,6 +188,7 @@ bool ICACHE_FLASH_ATTR layer_move(uint8_t from, uint8_t to)
 	uint8_t count = layer_count();
 	struct layer layer;
 	bool state;
+	bool preset_states[PRESET_MAX];
 
 	if (from >= count || to >= count) {
 		return false;
@@ -190,12 +199,18 @@ bool ICACHE_FLASH_ATTR layer_move(uint8_t from, uint8_t to)
 	}
 
 	state = !!(status_data.layers & 1 << from);
+	for (int i = 0; i < config_data.preset_count; i++) {
+		preset_states[i] = !!(config_data.presets[i].layers & 1 << from);
+	}
 
 	if (!layer_remove(from, &layer) || !layer_insert(to, &layer)) {
 		return false;
 	}
 
 	status_data.layers |= state ? 1 << to : 0;
+	for (int i = 0; i < config_data.preset_count; i++) {
+		config_data.presets[i].layers |= preset_states[i] ? 1 << to : 0;
+	}
 	return true;
 }
 
