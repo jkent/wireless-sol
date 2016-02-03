@@ -15,7 +15,8 @@ struct api_handler {
 	int (*func)(struct jsonparse_state *state, const char *action);
 };
 
-extern bool api_update;
+extern bool needs_layer_update;
+extern bool needs_led_update;
 
 int ICACHE_FLASH_ATTR api_parse(struct jsonparse_state *state);
 

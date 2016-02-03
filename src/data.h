@@ -8,10 +8,11 @@
 #define BLOCK_STATUS_FREE (1<<2)
 #define BLOCK_STATUS_NUM (1<<3)
 
-#define MODE_MAX 8
+#define PRESET_MAX 8
+#define PRESET_NAME_MAX 16
 
-struct mode_data {
-	uint8_t led_mode;
+struct preset {
+	char name[PRESET_NAME_MAX];
 	uint8_t background;
 	uint16_t layers;
 };
@@ -22,8 +23,8 @@ struct config_data {
 	uint16_t led_count;
 	struct layer layers[LAYER_MAX];
 
-	uint8_t mode_count;
-	struct mode_data mode_data[MODE_MAX];
+	uint8_t preset_count;
+	struct preset presets[PRESET_MAX];
 
 	uint32_t crc;
 };
@@ -31,9 +32,8 @@ struct config_data {
 struct status_data {
 	uint32_t block_status;
 
-	uint8_t mode;
+	uint8_t preset;
 
-	uint8_t led_mode;
 	uint8_t background;
 	uint16_t layers;
 

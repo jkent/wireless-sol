@@ -9,7 +9,7 @@ commands executed okay, or false if one or more commands failed.
 
 Below is a list of all calls and data expected.
 
-var path = "flash"; var action = "save"/"load";
+var path = "config"; var action = "save"/"load";
 var data = null;
 
 var path = "layer"; var action = "enable"/"disable";
@@ -25,7 +25,7 @@ var data = {
 
 var path = "layer"; var action = "move";
 var data = {
-  "layer": <str>/<int>,
+  "layer": <str>/<uint>,
   "to": <uint>
 };
 
@@ -40,6 +40,9 @@ var data = {
   "name": <str>
 };
 
+var path = "layer"; var action = "update";
+var data = null;
+
 var path = "layer.background"; var action = "set";
 var data = {
   "value": <uint8_t>
@@ -50,16 +53,41 @@ var data = {
   "values": [<uint8_t>, <uint8_t>, ...]
 };
 
-var path = "led.mode"; var action = "set";
+var path = "led"; var action = "update";
+var data = null;
+
+var path = "preset"; var action = "apply";
 var data = {
-  ["mode": "off"/"layer"/"set"],
-  ["fade": true/false]
+  "preset": <str>/<uint>
+};
+
+var path = "preset"; var action = "insert";
+var data = {
+  "name": <str>,
+  ["at": <uint>]
+};
+
+var path = "preset"; var action = "move";
+var data = {
+  "preset": <str>/<uint>,
+  "to": <uint>
+};
+
+var path = "preset"; var action = "remove";
+var data = {
+  "preset": <str>/<uint>
+};
+
+var path = "preset"; var action = "rename";
+var data = {
+  "preset": <str>/<uint>,
+  "name": <str>
 };
 
 var path = "range"; var action = "add";
 var data = {
   "layer": <str>/<uint>,
-  "type": "set"/"copy"/"taper",
+  "type": "set"/"add"/"subtract"/"copy"/"taper",
   "lb": <uint16_t>,
   "ub": <uint16_t>,
   ["value": <uint16_t>=0]
@@ -69,7 +97,7 @@ var path = "range"; var action = "edit";
 var data = {
   "layer": <str>/<uint>,
   "range": <uint>,
-  ["type": "set"/"copy"/"taper"],
+  ["type": "set"/"add"/"subtract"/"copy"/"taper"],
   ["lb": <uint16_t>],
   ["ub": <uint16_t>],
   ["value": <uint16_t>]

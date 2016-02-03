@@ -198,11 +198,6 @@ finish:
 	httpdEndHeaders(connData);
 	httpdSend(connData, api->status == API_OK ? "true" : "false", -1);
 
-	if (api_update) {
-		api_update = false;
-		master_update(true);
-	}
-
 	if (status_dirty) {
 		status_save();
 	}

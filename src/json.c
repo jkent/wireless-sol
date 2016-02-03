@@ -4,6 +4,7 @@
 #include "data.h"
 #include "led.h"
 #include "layer.h"
+#include "api.h"
 
 static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 {
@@ -42,12 +43,22 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 		path->putchar(':');
 		jsontree_write_atom(path, config_dirty ? "true" : "false");
 		break;
+	case 6:
+		jsontree_write_string(path, "needs_layer_update");
+		path->putchar(':');
+		jsontree_write_atom(path, needs_layer_update ? "true" : "false");
+		break;
+	case 7:
+		jsontree_write_string(path, "needs_led_update");
+		path->putchar(':');
+		jsontree_write_atom(path, needs_led_update ? "true" : "false");
+		break;
 	default:
 		path->putchar('}');
 		return 0;
 	}
 
-	if (path->callback_state < 6) {
+	if (path->callback_state < 8) {
 		path->putchar(',');
 	}
 
@@ -80,44 +91,6 @@ static int ICACHE_FLASH_ATTR led_callback(struct jsontree_context *path)
 
 const struct jsontree_callback json_led_callback =
 	JSONTREE_CALLBACK(led_callback, NULL);
-
-static int ICACHE_FLASH_ATTR led_mode_callback(struct jsontree_context *path)
-{
-	if (path->callback_state == 0) {
-		path->putchar('{');
-	}
-
-	switch (path->callback_state++) {
-	case 0:
-		jsontree_write_string(path, "mode");
-		path->putchar(':');
-		if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_OFF) {
-			jsontree_write_string(path, "off");
-		} else if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_LAYER) {
-			jsontree_write_string(path, "layer");
-		} else if ((status_data.led_mode & ~LED_MODE_FADE) == LED_MODE_SET) {
-			jsontree_write_string(path, "set");
-		}
-		break;
-	case 1:
-		jsontree_write_string(path, "fade");
-		path->putchar(':');
-		jsontree_write_atom(path, status_data.led_mode & LED_MODE_FADE ? "true" : "false");
-		break;
-	default:
-		path->putchar('}');
-		return 0;
-	}
-
-	if (path->callback_state < 2) {
-		path->putchar(',');
-	}
-
-	return 1;
-}
-
-const struct jsontree_callback json_led_mode_callback =
-	JSONTREE_CALLBACK(led_mode_callback, NULL);
 
 static int ICACHE_FLASH_ATTR layer_list_callback(struct jsontree_context *path)
 {

@@ -57,7 +57,7 @@ void ICACHE_FLASH_ATTR led_init(void)
 	GPIO_OUTPUT_SET(5, 0);
 
 	/* Init LED data */
-	master_update(false);
+	layer_update(false);
 
 	/* Wait for refresh */
 	start_time = _getCycleCount();

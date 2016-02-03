@@ -33,7 +33,7 @@
       top: -0.25em;
       padding-left: 2.5em;
     }
-    #settings, #modes, #layers {
+    #settings, #layers {
       position: absolute;
       width: 14em;
       border: 1px solid black;
@@ -42,21 +42,18 @@
     #settings {
       top: 5em;
     }
-    #modes {
-      top: 10em;
-    }
     #layers {
-      top: 16.5em;
+      top: 10em;
       background-color: black;
     }
-    #settings .heading, #modes .heading, #layers .heading {
+    #settings .heading, #layers .heading {
       font-weight: bold;
       background-color: #fc0;
       text-align: center;
       border-bottom: 1px solid black;
       line-height: 1.5em;
     }
-    #settings form, #modes form, #layers form {
+    #settings form, #layers form {
       line-height: 1.5em;
       padding: 0.6em;
       background-color: #ffc;
@@ -101,7 +98,6 @@
     }
     #layers .new span {
       margin: 0 0 0 0.6em;
-      font-size: 80%;
     }
     #layers .new input {
       float: right;
@@ -133,8 +129,7 @@
     #layer_edit form {
       line-height: 1.75em;
     }
-    #layer_edit label, #settings label, #modes label, #layers label {
-      font-size: 85%;
+    #layer_edit label, #settings label, #layers label {
       display: inline-block;
       width: 5em;
     }
@@ -160,20 +155,6 @@
   <form onsubmit="return false;">
     <label for="ledcount">LED count</label>
     <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" onkeydown="ledcount_keydown(this)" autocomplete="off" />
-  </form>
-</div>
-
-<div id="modes">
-  <div class="heading">Modes</div>
-  <form onsubmit="return false;">
-    <label for="mode">Mode</label>
-    <select class="modesel" name="mode" onchange="mode_change(this)">
-      <option value="off">Off</option>
-      <option value="layer">Layer</option>
-      <option value="set">Set</option>
-    </select><br />
-    <label for="fade">Fade</label>
-    <input class="fadecheck" name="fade" type="checkbox" onchange="fade_change(this)" />
   </form>
 </div>
 
@@ -208,8 +189,6 @@
 </div>
 
 <script type="text/javascript">
-var base_url = '';
-
 var layer = -1;
 var ranges;
 var settings;
@@ -217,12 +196,12 @@ var multirange;
 
 function save_click() {
   $('#changes').css('display', 'none');
-  $.post(base_url + '/cgi/api', '[["config","save",null]]');
+  $.post('/cgi/api', '[["config","save",null]]');
 }
 
 function discard_click() {
   $('#changes').css('display', 'none');
-  $.post(base_url + '/cgi/api', '[["config","load",null]]');
+  $.post('/cgi/api', '[["config","load",null]]');
   $('#layer_edit').css('display', 'none');
   $('#layers ul').empty();
   init();
@@ -241,26 +220,16 @@ function ledcount_keydown(e) {
   if(event.keyCode == 13) {
     ledcount_change(e);
     data = {'led_count': Number(e.value)};
-    $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
+    $.post('/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
     $('#changes').css('display', 'block');
   }
-}
-
-function mode_change(e) {
-  data = {'mode': e.value};
-  $.post(base_url + '/cgi/api', '[["led.mode","set",' + JSON.stringify(data) + ']]');
-}
-
-function fade_change(e) {
-  data = {'fade': e.checked};
-  $.post(base_url + '/cgi/api', '[["led.mode","set",' + JSON.stringify(data) + ']]');
 }
 
 function background_keydown(e) {
   if(event.keyCode == 13) {
     intChangeHandler(e, 255);
     data = {'value': Number(e.value)};
-    $.post(base_url + '/cgi/api', '[["layer.background","set",' + JSON.stringify(data) + ']]');
+    $.post('/cgi/api', '[["layer.background","set",' + JSON.stringify(data) + ']]');
   }
 }
 
@@ -316,25 +285,25 @@ function layers_edit_click(e) {
             var value = Number($('#range .valuetext').val());
             ranges.splice(data['i'], 0, {'type': type, 'value': value});
             data = {'layer': layer, 'type': type, 'lb': data['lb'], 'ub': data['ub'], 'value': value};
-            $.post(base_url + '/cgi/api', '[["range","add",' + JSON.stringify(data) + ']]');
+            $.post('/cgi/api', '[["range","add",' + JSON.stringify(data) + ']]');
             $('#changes').css('display', 'block');
           } else if (action == 'update') {
             var type = $('#range .typesel').val();
             var value = Number($('#range .valuetext').val());
             ranges[data['i']] = {'type': type, 'value': value};
             data = {'layer': layer, 'type': type, 'range': data['i'], 'lb': data['lb'], 'ub': data['ub'], 'value': value};
-            $.post(base_url + '/cgi/api', '[["range","edit",' + JSON.stringify(data) + ']]'); 
+            $.post('/cgi/api', '[["range","edit",' + JSON.stringify(data) + ']]');
             $('#changes').css('display', 'block');
           } else if (action == 'remove') {
             $('#range').css('display', 'none');
             ranges.splice(data, 1);
             data = {'layer': layer, 'range': data};
-            $.post(base_url + '/cgi/api', '[["range","remove",' + JSON.stringify(data) + ']]');
+            $.post('/cgi/api', '[["range","remove",' + JSON.stringify(data) + ']]');
             $('#changes').css('display', 'block');
           }
         }
       });
-      $.getJSON(base_url + '/cgi/layer.json?id=' + i, function(data) {
+      $.getJSON('/cgi/layer.json?id=' + i, function(data) {
         ranges = [];
         $.each(data['ranges'], function(i, range) {
           multirange.range_add(range);
@@ -367,9 +336,9 @@ function layers_enable_click(e) {
     if ($.contains(this, e)) {
       data = {'layer': i};
       if (e.checked) {
-        $.post(base_url + '/cgi/api', '[["layer","enable",' + JSON.stringify(data) + ']]');
+        $.post('/cgi/api', '[["layer","enable",' + JSON.stringify(data) + ']]');
       } else {
-        $.post(base_url + '/cgi/api', '[["layer","disable",' + JSON.stringify(data) + ']]');
+        $.post('/cgi/api', '[["layer","disable",' + JSON.stringify(data) + ']]');
       }
     }
   });
@@ -391,7 +360,7 @@ function layers_delete_click(e) {
 
         $(this).remove();
         data = {'layer': i};
-        $.post(base_url + '/cgi/api', '[["layer","remove",' + JSON.stringify(data) + ']]');
+        $.post('/cgi/api', '[["layer","remove",' + JSON.stringify(data) + ']]');
         $('#changes').css('display', 'block');
       }
     });
@@ -410,7 +379,7 @@ function layers_new_edit_keydown(e) {
     }
     layers_add(e.value);
     data = {'name': e.value};
-    $.post(base_url + '/cgi/api', '[["layer","insert",' + JSON.stringify(data) + ']]');
+    $.post('/cgi/api', '[["layer","insert",' + JSON.stringify(data) + ']]');
     e.value = '';
     $('#changes').css('display', 'block');
   }
@@ -441,28 +410,23 @@ function init() {
         layer += 1;
       }
       data = {'layer': evt.oldIndex, 'to': evt.newIndex};
-      $.post(base_url + '/cgi/api', '[["layer","move",' + JSON.stringify(data) + ']]');
+      $.post('/cgi/api', '[["layer","move",' + JSON.stringify(data) + ']]');
       $('#changes').css('display', 'block');
     }
   });
 
-  $.getJSON(base_url + '/cgi/layer/background.json', function(data) {
+  $.getJSON('/cgi/layer/background.json', function(data) {
     $('#layers .backgroundtext').val(data);
   });
 
-  $.getJSON(base_url + '/cgi/settings.json', function(data) {
+  $.getJSON('/cgi/settings.json', function(data) {
     settings = data;
     $('#settings .ledcounttext').val(settings['led_count']);
     $('#layers .new input').attr('maxlength', settings['layer_name_max']);
     $('#changes').css('display', settings['unsaved_changes'] ? 'block' : 'none');    
   });
 
-  $.getJSON(base_url + '/cgi/led/mode.json', function(data) {
-    $('#modes .modesel').val(data['mode']);
-    $('#modes .fadecheck').prop('checked', data['fade']);
-  });
-
-  $.getJSON(base_url + '/cgi/layer.json', function(data) {
+  $.getJSON('/cgi/layer.json', function(data) {
     $.each(data, function(i, layer) {
       layers_add(layer['name']);
       $('#layers ul input').last().prop('checked', layer['enabled']);
