@@ -132,8 +132,10 @@ void ICACHE_FLASH_ATTR layer_update(bool fade)
 
 	if (fade) {
 		fade_steps = (config_data.fade_time * 60) / 1000;
-		for (uint16_t i = 0; i < config_data.led_count; i++) {
-			led_delta[i] = (led_next[i] - led_current[i]) / fade_steps;
+		if (fade_steps > 0) {
+			for (uint16_t i = 0; i < config_data.led_count; i++) {
+				led_delta[i] = (led_next[i] - led_current[i]) / fade_steps;
+			}
 		}
 		fade_count = 0;
 		fade_timer_cb(NULL);
