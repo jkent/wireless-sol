@@ -25,41 +25,46 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 		jsontree_write_int(path, config_data.led_count);
 		break;
 	case 2:
+		jsontree_write_string(path, "fade_time");
+		path->putchar(':');
+		jsontree_write_int(path, config_data.fade_time);
+		break;
+	case 3:
 		jsontree_write_string(path, "range_max");
 		path->putchar(':');
 		jsontree_write_int(path, RANGE_MAX);
 		break;
-	case 3:
+	case 4:
 		jsontree_write_string(path, "layer_max");
 		path->putchar(':');
 		jsontree_write_int(path, LAYER_MAX);
 		break;
-	case 4:
+	case 5:
 		jsontree_write_string(path, "layer_name_max");
 		path->putchar(':');
 		jsontree_write_int(path, LAYER_NAME_MAX);
 		break;
-	case 5:
+	case 6:
 		jsontree_write_string(path, "preset_max");
 		path->putchar(':');
 		jsontree_write_int(path, PRESET_MAX);
 		break;
-	case 6:
+	case 7:
 		jsontree_write_string(path, "preset_name_max");
 		path->putchar(':');
 		jsontree_write_int(path, PRESET_NAME_MAX);
 		break;
-	case 7:
+	case 8:
 		jsontree_write_string(path, "config_dirty");
 		path->putchar(':');
 		jsontree_write_atom(path, config_dirty ? "true" : "false");
 		break;
-	case 8:
+	case 9:
 		jsontree_write_string(path, "needs_layer_update");
 		path->putchar(':');
 		jsontree_write_atom(path, needs_layer_update ? "true" : "false");
 		break;
-	case 9:
+	case 10:
 		jsontree_write_string(path, "needs_led_update");
 		path->putchar(':');
 		jsontree_write_atom(path, needs_led_update ? "true" : "false");
@@ -69,7 +74,7 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 		return 0;
 	}
 
-	if (path->callback_state < 10) {
+	if (path->callback_state < 11) {
 		path->putchar(',');
 	}
 

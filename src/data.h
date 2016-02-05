@@ -21,6 +21,7 @@ struct config_data {
 	uint32_t block_status;
 
 	uint16_t led_count;
+	uint16_t fade_time;
 	struct layer layers[LAYER_MAX];
 
 	uint8_t preset_count;

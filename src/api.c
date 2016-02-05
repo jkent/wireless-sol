@@ -1016,10 +1016,11 @@ static int ICACHE_FLASH_ATTR range_remove_handler(struct jsonparse_state *state,
 static int ICACHE_FLASH_ATTR settings_set_handler(struct jsonparse_state *state, const char *action)
 {
 	char name[10];
-	uint16_t led_count;
+	uint16_t led_count, fade_time;
 	char type;
 
 	led_count = config_data.led_count;
+	fade_time = config_data.fade_time;
 
 	if (jsonparse_next(state) != '{') {
 		return API_ERROR_PARSE;
@@ -1038,6 +1039,8 @@ static int ICACHE_FLASH_ATTR settings_set_handler(struct jsonparse_state *state,
 		type = jsonparse_next(state);
 		if (strcmp(name, "led_count") == 0 && type == '0') {
 			led_count = jsonparse_get_value_as_int(state);
+		} else if (strcmp(name, "fade_time") == 0 && type == '0') {
+			fade_time = jsonparse_get_value_as_int(state);
 		} else {
 			return API_ERROR_PARSE;
 		}
@@ -1048,6 +1051,7 @@ static int ICACHE_FLASH_ATTR settings_set_handler(struct jsonparse_state *state,
 	}
 
 	config_data.led_count = led_count;
+	config_data.fade_time = fade_time;
 
 	needs_layer_update = true;
 	config_dirty = true;

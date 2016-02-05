@@ -79,7 +79,7 @@
     }
     #settings label {
       display: inline-block;
-      width: 5em;
+      width: 6em;
     }
   </style>
 
@@ -110,6 +110,8 @@
   <form onsubmit="return false;">
     <label for="ledcount">LED count</label>
     <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" onkeydown="ledcount_keydown(this)" autocomplete="off" />
+    <label for="fadetime">Fade time(ms)</label>
+    <input class="fadetimetext" name="fadetime" type="text" size="4" maxlength="4" onchange="intChangeHandler(this)" onkeydown="fadetime_keydown(this)" autocomplete="off" />
   </form>
 </div>
 
@@ -146,7 +148,16 @@ function ledcount_keydown(e) {
     data = {'led_count': Number(e.value)};
     $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
     $('#changes').css('display', 'block');
-    $('#layer_edit').css('display', 'none');
+    fetch_settings();
+  }
+}
+
+function fadetime_keydown(e) {
+  if(event.keyCode == 13) {
+    intChangeHandler(e, 1000);
+    data = {'fade_time': Number(e.value)};
+    $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
+    $('#changes').css('display', 'block');
     fetch_settings();
   }
 }
@@ -164,6 +175,7 @@ function fetch_settings() {
   $.getJSON(base_url + '/cgi/settings.json', function(data) {
     settings = data;
     $('#settings .ledcounttext').val(settings['led_count']);
+    $('#settings .fadetimetext').val(settings['fade_time']);
     $('#changes').css('display', settings['config_dirty'] ? 'block' : 'none');
   });
 }

@@ -5,6 +5,11 @@
 #include "util.h"
 #include "api.h"
 
+static int8_t led_delta[LED_MAX];
+static uint8_t fade_count;
+static os_timer_t fade_timer;
+static uint8_t fade_steps;
+
 static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 {
 	/* validate ranges */
@@ -88,6 +93,28 @@ static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 	}
 }
 
+static void ICACHE_FLASH_ATTR fade_timer_cb(void *arg)
+{
+	if (fade_count++ < fade_steps) {
+		for (uint16_t i = 0; i < config_data.led_count; i++) {
+			int16_t led = led_current[i] + led_delta[i];
+			if (led > 255) {
+				led = 255;
+			} else if (led < 0) {
+				led = 0;
+			}
+			led_current[i] = led;
+		}
+		led_update();
+	} else {
+		os_timer_disarm(&fade_timer);
+		for (uint16_t i = 0; i < config_data.led_count; i++) {
+			led_current[i] = led_next[i];
+		}
+		led_update();
+	}
+}
+
 void ICACHE_FLASH_ATTR layer_update(bool fade)
 {
 	memset(led_next, status_data.background, config_data.led_count);
@@ -103,8 +130,16 @@ void ICACHE_FLASH_ATTR layer_update(bool fade)
 		apply_layer(layer);
 	}
 
-	if (fade && false) {
-		/* TODO: implement & start fade timer */
+	if (fade) {
+		fade_steps = (config_data.fade_time * 60) / 1000;
+		for (uint16_t i = 0; i < config_data.led_count; i++) {
+			led_delta[i] = (led_next[i] - led_current[i]) / fade_steps;
+		}
+		fade_count = 0;
+		fade_timer_cb(NULL);
+		os_timer_disarm(&fade_timer);
+		os_timer_setfn(&fade_timer, fade_timer_cb, NULL);
+		os_timer_arm(&fade_timer, 17, 1);
 	} else {
 		memcpy(led_current, led_next, config_data.led_count);
 		led_update();
