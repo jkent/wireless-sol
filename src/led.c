@@ -2,6 +2,7 @@
 #include "layer.h"
 #include "led.h"
 #include "data.h"
+#include "api.h"
 
 uint8_t led_next[LED_MAX] = {0};
 uint8_t led_current[LED_MAX] = {0};
@@ -98,4 +99,5 @@ void led_update(void)
 		}
 		ets_intr_unlock();
 	}
+	needs_led_update = false;
 }

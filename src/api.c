@@ -451,6 +451,75 @@ static int ICACHE_FLASH_ATTR preset_apply_handler(struct jsonparse_state *state,
 	return API_OK;
 }
 
+static int ICACHE_FLASH_ATTR preset_edit_handler(struct jsonparse_state *state, const char *action)
+{
+	char name[PRESET_NAME_MAX + 1];
+	struct preset *preset;
+	int preset_id = -1;
+	bool have_background, have_layers;
+	char type;
+	uint8_t background;
+	uint16_t layers;
+
+	have_background = have_layers = false;
+
+	if (jsonparse_next(state) != '{') {
+		return API_ERROR_PARSE;
+	}
+
+	while (true) {
+		if ((type = jsonparse_next(state)) == '}') {
+			break;
+		} else if (type == ',') {
+			continue;
+		} else if (type != 'N') {
+			return API_ERROR_PARSE;
+		}
+
+		jsonparse_copy_value(state, name, sizeof(name));
+		type = jsonparse_next(state);
+		if (strcmp(name, "preset") == 0) {
+			if (type == '"') {
+				jsonparse_copy_value(state, name, sizeof(name));
+				preset_id = preset_find(name);
+			} else if (type == '0') {
+				preset_id = jsonparse_get_value_as_int(state);
+			} else {
+				return API_ERROR_PARSE;
+			}
+		} else if (strcmp(name, "background") == 0 && type == '0') {
+			background = jsonparse_get_value_as_int(state);
+			have_background = true;
+		} else if (strcmp(name, "layers") == 0 && type == '0') {
+			layers = jsonparse_get_value_as_int(state);
+			have_layers = true;
+		} else {
+			return API_ERROR_PARSE;
+		}
+	}
+
+	if (preset_id < 1) {
+		return API_ERROR_PARSE;
+	}
+
+	if (preset_id > config_data.preset_count) {
+		return API_FAIL;
+	}
+
+	preset = &config_data.presets[preset_id - 1];
+
+	if (have_background) {
+		preset->background = background;
+	}
+
+	if (have_layers) {
+		preset->layers = layers;
+	}
+
+	config_dirty = true;
+	return API_OK;
+}
+
 static int ICACHE_FLASH_ATTR preset_insert_handler(struct jsonparse_state *state, const char *action)
 {
 	char name[PRESET_NAME_MAX + 1];
@@ -480,6 +549,10 @@ static int ICACHE_FLASH_ATTR preset_insert_handler(struct jsonparse_state *state
 			strncpy(preset.name, name, sizeof(preset.name));
 		} else if (strcmp(name, "at") == 0 && type == '0') {
 			insert_at = jsonparse_get_value_as_int(state);
+		} else if (strcmp(name, "background") == 0 && type == '0') {
+			preset.background = jsonparse_get_value_as_int(state);
+		} else if (strcmp(name, "layers") == 0 && type == '0') {
+			preset.layers = jsonparse_get_value_as_int(state);
 		} else {
 			return API_ERROR_PARSE;
 		}
@@ -496,9 +569,6 @@ static int ICACHE_FLASH_ATTR preset_insert_handler(struct jsonparse_state *state
 	if (insert_at < 0) {
 		insert_at = config_data.preset_count + 1;
 	}
-
-	preset.background = status_data.background;
-	preset.layers = status_data.layers;
 
 	if (!preset_insert(insert_at, &preset)) {
 		return API_FAIL;
@@ -643,7 +713,7 @@ static int ICACHE_FLASH_ATTR preset_rename_handler(struct jsonparse_state *state
 		return API_ERROR_PARSE;
 	}
 
-	if (preset_id >= config_data.preset_count) {
+	if (preset_id > config_data.preset_count) {
 		return API_FAIL;
 	}
 
@@ -998,6 +1068,7 @@ static struct api_handler handlers[] = {
 	{"led", "set", led_set_handler},
 	{"led", "update", led_update_handler},
 	{"preset", "apply", preset_apply_handler},
+	{"preset", "edit", preset_edit_handler},
 	{"preset", "insert", preset_insert_handler},
 	{"preset", "move", preset_move_handler},
 	{"preset", "remove", preset_remove_handler},

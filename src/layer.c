@@ -3,6 +3,7 @@
 #include "led.h"
 #include "data.h"
 #include "util.h"
+#include "api.h"
 
 static void ICACHE_FLASH_ATTR apply_layer(struct layer *layer)
 {
@@ -108,6 +109,7 @@ void ICACHE_FLASH_ATTR layer_update(bool fade)
 		memcpy(led_current, led_next, config_data.led_count);
 		led_update();
 	}
+	needs_layer_update = false;
 }
 
 int8_t ICACHE_FLASH_ATTR layer_find(const char *name)

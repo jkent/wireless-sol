@@ -53,15 +53,17 @@
       background-color: #ffc;
       text-align: center;
     }
-    #presets {
+    #settings {
       position: absolute;
-      top: 5em;
       width: 14em;
       border: 1px solid black;
       border-radius: 0.5em;
       background-color: #ffc;
     }
-    #presets .heading {
+    #settings {
+      top: 5em;
+    }
+    #settings .heading {
       font-weight: bold;
       background-color: #fc0;
       text-align: center;
@@ -69,20 +71,15 @@
       border-radius: 0.5em 0.5em 0 0;
       line-height: 1.5em;
     }
-    #presets ul {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
+    #settings form {
       line-height: 1.5em;
-      border-radius: 0.5em;
-    }
-    #presets li {
-      border: 1px solid #ffc;
-      text-align: center;
-      line-height: 1.5em;
-    }
-    #presets li:last-child {
+      padding: 0.6em;
+      background-color: #ffc;
       border-radius: 0 0 0.5em 0.5em;
+    }
+    #settings label {
+      display: inline-block;
+      width: 5em;
     }
   </style>
 
@@ -96,8 +93,8 @@
 </div>
 
 <div id="nav">
-  <a href="index.html" class="current">Home</a>
-  <a href="settings.html">Settings</a>
+  <a href="index.html">Home</a>
+  <a href="settings.html" class="current">Settings</a>
   <a href="layers.html">Layers</a>
   <a href="presets.html">Presets</a>
 </div>
@@ -108,9 +105,12 @@
   <button class="discardbtn" onclick="discard_click()">Discard</button>
 </div>
 
-<div id="presets">
-  <div class="heading">Presets</div>
-  <ul></ul>
+<div id="settings">
+  <div class="heading">Settings</div>
+  <form onsubmit="return false;">
+    <label for="ledcount">LED count</label>
+    <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" onkeydown="ledcount_keydown(this)" autocomplete="off" />
+  </form>
 </div>
 
 <script type="text/javascript">
@@ -126,37 +126,52 @@ function save_click() {
 function discard_click() {
   $('#changes').css('display', 'none');
   $.post(base_url + '/cgi/api', '[["config","load",null]]');
+  $('#layer_edit').css('display', 'none');
+  $('#layers ul').empty();
   init();
 }
 
-function presets_add(name) {
-  $('#presets ul').append('<li><a href="#" onclick="presets_click(this)">' + name + '</a></li>');
+function ledcount_change(e) {
+  e.value = Number(e.value);
+  if (e.value < 0 || e.value == 'NaN') {
+    e.value = 0;
+  } else if (e.value > settings['led_max']) {
+    e.value = settings['led_max'];
+  }
 }
 
-function presets_click(e) {
-  $('#presets li').each(function(i) {
-    if ($.contains(this, e)) {
-        data = {'preset': i};
-        $.post(base_url + '/cgi/api', '[["preset","apply",' + JSON.stringify(data) + ']]');
-    }
+function ledcount_keydown(e) {
+  if(event.keyCode == 13) {
+    ledcount_change(e);
+    data = {'led_count': Number(e.value)};
+    $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
+    $('#changes').css('display', 'block');
+    $('#layer_edit').css('display', 'none');
+    fetch_settings();
+  }
+}
+
+function intChangeHandler(e, max) {
+  e.value = Number(e.value);
+  if (e.value < 0 || e.value == 'NaN') {
+    e.value = 0;
+  } else if (e.value > max) {
+    e.value = max;
+  }
+}
+
+function fetch_settings() {
+  $.getJSON(base_url + '/cgi/settings.json', function(data) {
+    settings = data;
+    $('#settings .ledcounttext').val(settings['led_count']);
+    $('#changes').css('display', settings['config_dirty'] ? 'block' : 'none');
   });
 }
 
 function init() {
-  $.getJSON(base_url + '/cgi/preset.json', function(data) {
-    presets = data;
-    $.each(data, function(i, preset) {
-      presets_add(preset['name']);
-    });
-  });
-
-  $.getJSON(base_url + '/cgi/settings.json', function(data) {
-    settings = data;
-    $('#changes').css('display', settings['config_dirty'] ? 'block' : 'none');
-  });
+  fetch_settings();
 }
 $(init);
-
 </script>
 
 </body>

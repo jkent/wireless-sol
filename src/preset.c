@@ -1,6 +1,7 @@
 #include <esp8266.h>
 #include "data.h"
 #include "led.h"
+#include "layer.h"
 #include "preset.h"
 
 bool ICACHE_FLASH_ATTR preset_apply(uint8_t preset_num)
@@ -8,6 +9,8 @@ bool ICACHE_FLASH_ATTR preset_apply(uint8_t preset_num)
 	if (preset_num > config_data.preset_count) {
 		return false;
 	}
+
+	status_data.preset = preset_num;
 
 	if (status_data.preset == 0) {
 		status_data.background = 0;
@@ -19,8 +22,6 @@ bool ICACHE_FLASH_ATTR preset_apply(uint8_t preset_num)
 		status_data.layers = preset->layers;
 	}
 
-	status_data.preset = preset_num;
-
 	layer_update(true);
 	return true;
 }
@@ -29,7 +30,11 @@ void ICACHE_FLASH_ATTR preset_apply_next(void)
 {
 	uint8_t n = status_data.preset + 1;
 	if (n > config_data.preset_count) {
-		n = 0;
+		if (config_data.preset_count > 0) {
+			n = 1;
+		} else {
+			n = 0;
+		}
 	}
 	preset_apply(n);
 }
@@ -56,8 +61,8 @@ bool ICACHE_FLASH_ATTR preset_insert(uint8_t id, struct preset *preset)
 		return false;
 	}
 
-	if (config_data.preset_count && (id - 1) < config_data.preset_count) {
-		memmove(&config_data.presets[id], &config_data.presets[id - 1], sizeof(struct preset) * (config_data.preset_count - id - 1));
+	if (config_data.preset_count && id <= config_data.preset_count) {
+		memmove(&config_data.presets[id], &config_data.presets[id - 1], sizeof(struct preset) * (config_data.preset_count - (id - 1)));
 	}
 
 	memcpy(&config_data.presets[id - 1], preset, sizeof(struct preset));
@@ -76,7 +81,7 @@ bool ICACHE_FLASH_ATTR preset_remove(uint8_t id, struct preset *preset)
 	}
 
 	if (id < config_data.preset_count) {
-		memmove(&config_data.presets[id - 1], &config_data.presets[id], sizeof(struct preset) * (config_data.preset_count - id - 2));
+		memmove(&config_data.presets[id - 1], &config_data.presets[id], sizeof(struct preset) * (config_data.preset_count - (id - 1) - 1));
 	}
 
 	config_data.preset_count--;

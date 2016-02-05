@@ -11,16 +11,6 @@
     body {
       background-color: lightblue;
     }
-    #changes {
-      position: absolute;
-      right: 0.5em;
-      top: 0.5em;
-      padding: 0.4em;
-      border: 1px solid black;
-      line-height: 1.5em;
-      background-color: #ffc;
-      text-align: center;
-    }
     #header {
       position: absolute;
       top: 0.5em;
@@ -33,11 +23,45 @@
       top: -0.25em;
       padding-left: 2.5em;
     }
+    #nav {
+      position: absolute;
+      left: 18em;
+      line-height: 4em;
+    }
+    #nav a {
+      border: 1px solid black;
+      border-radius: 0.5em;
+      background-color: #ffc;
+      padding: 0.5em;
+      margin: 0.25em;
+      text-decoration: none;
+      color: black;
+    }
+    #nav a:hover {
+      border-color: #fc0;
+      background-color: #ffd;
+    }
+    #nav a.current {
+      border-color: black;
+      background-color: #fc0;
+    }
+    #changes {
+      position: absolute;
+      right: 0.5em;
+      top: 0.5em;
+      padding: 0.4em;
+      border: 1px solid black;
+      border-radius: 0.5em;
+      line-height: 1.5em;
+      background-color: #ffc;
+      text-align: center;
+    }
     #layers {
       position: absolute;
       top: 5em;
       width: 14em;
       border: 1px solid black;
+      border-radius: 0.5em;
       background-color: black;
     }
     #layers .heading {
@@ -45,17 +69,20 @@
       background-color: #fc0;
       text-align: center;
       border-bottom: 1px solid black;
+      border-radius: 0.5em 0.5em 0 0;
       line-height: 1.5em;
     }
     #layers form {
       line-height: 1.5em;
       padding: 0.6em;
       background-color: #ffc;
+      border-radius: 0 0 0.5em 0.5em;
     }
     #layers ul {
       list-style-type: none;
       padding: 0;
       margin: 0;
+      line-height: 1.5em;
     }
     #layers li {
       background-color: #ffc;
@@ -76,7 +103,7 @@
       top: 0.1em;
     }
     #layers li .delete {
-      margin: 0 0.4em;
+      margin: 0.25em 0.4em;
       float: right;
     }
     #layers .ghost {
@@ -89,9 +116,10 @@
     #layers .new {
       background-color: #ffc;
       line-height: 1.5em;
+      border-radius: 0 0 0.5em 0.5em;
     }
     #layers .new span {
-      margin: 0 0 0 0.6em;
+      margin: 0 0 0 0.4em;
     }
     #layers .new input {
       float: right;
@@ -107,6 +135,7 @@
       margin-left: 14.75em;
       display: inline-block;
       border: 1px solid black;
+      border-radius: 0.5em;
       background-color: #ffc;
       min-width:40em;
     }
@@ -114,6 +143,7 @@
       text-align: center;
       background-color: #fc0;
       border-bottom: 1px solid black;
+      border-radius: 0.5em 0.5em 0 0;
       font-weight: bold;
       line-height: 1.5em;
     }
@@ -136,6 +166,13 @@
 <div id="header">
  <img src="images/logo.png" width="64" />
  <h1>Wireless Sol</h1>
+</div>
+
+<div id="nav">
+  <a href="index.html">Home</a>
+  <a href="settings.html">Settings</a>
+  <a href="layers.html" class="current">Layers</a>
+  <a href="presets.html">Presets</a>
 </div>
 
 <div id="changes" style="display:none;">
@@ -171,6 +208,8 @@
 </div>
 
 <script type="text/javascript">
+var base_url = '';
+
 var layer = -1;
 var ranges;
 var settings;
@@ -178,19 +217,19 @@ var multirange;
 
 function save_click() {
   $('#changes').css('display', 'none');
-  $.post('/cgi/api', '[["config","save",null]]');
+  $.post(base_url + '/cgi/api', '[["config","save",null]]');
 }
 
 function discard_click() {
   $('#changes').css('display', 'none');
-  $.post('/cgi/api', '[["config","load",null]]');
+  $.post(base_url + '/cgi/api', '[["config","load",null]]');
   $('#layer_edit').css('display', 'none');
   $('#layers ul').empty();
   init();
 }
 
-function layers_add(n) {
-  $('#layers ul').append('<li><span class="handle">::</span><a href="#" onclick="layers_edit_click(this)">' + n + '</a><img class="delete" src="images/delete.gif" onclick="layers_delete_click(this)" />');
+function layers_add(name) {
+  $('#layers ul').append('<li><span class="handle">::</span><a href="#" onclick="layers_edit_click(this)">' + name + '</a><img class="delete" src="images/delete.gif" onclick="layers_delete_click(this)" />');
 }
 
 function layers_edit_click(e) {
@@ -199,6 +238,7 @@ function layers_edit_click(e) {
       if (multirange) {
         multirange.destroy();
         multirange = null;
+        $.post(base_url + '/cgi/api', '[["layer","update",null]]');
       }
 
       layer = i;
@@ -241,25 +281,40 @@ function layers_edit_click(e) {
             var value = Number($('#range .valuetext').val());
             ranges.splice(data['i'], 0, {'type': type, 'value': value});
             data = {'layer': layer, 'type': type, 'lb': data['lb'], 'ub': data['ub'], 'value': value};
-            $.post('/cgi/api', '[["range","add",' + JSON.stringify(data) + ']]');
+            $.post(base_url + '/cgi/api', '[["range","add",' + JSON.stringify(data) + ']]');
             $('#changes').css('display', 'block');
           } else if (action == 'update') {
             var type = $('#range .typesel').val();
             var value = Number($('#range .valuetext').val());
             ranges[data['i']] = {'type': type, 'value': value};
             data = {'layer': layer, 'type': type, 'range': data['i'], 'lb': data['lb'], 'ub': data['ub'], 'value': value};
-            $.post('/cgi/api', '[["range","edit",' + JSON.stringify(data) + ']]');
+            $.post(base_url + '/cgi/api', '[["range","edit",' + JSON.stringify(data) + ']]');
             $('#changes').css('display', 'block');
           } else if (action == 'remove') {
             $('#range').css('display', 'none');
             ranges.splice(data, 1);
             data = {'layer': layer, 'range': data};
-            $.post('/cgi/api', '[["range","remove",' + JSON.stringify(data) + ']]');
+            $.post(base_url + '/cgi/api', '[["range","remove",' + JSON.stringify(data) + ']]');
             $('#changes').css('display', 'block');
+          } else if (action == 'select') {
+            var leds = [];
+            for (var i = 0; i < data['lb']; i++) {
+              leds.push(0);
+            }
+            for (var i = data['lb']; i <= data['ub']; i++) {
+              leds.push(255);
+            }
+            for (var i = data['ub'] + 1; i < settings['led_count']; i++) {
+              leds.push(0);
+            }
+            data = {'values': leds};
+            $.post(base_url + '/cgi/api', '[["led","set",' + JSON.stringify(data) + '],["led","update",null]]');
+          } else if (action == 'deselect') {
+            $.post(base_url + '/cgi/api', '[["layer","update",null]]');
           }
         }
       });
-      $.getJSON('/cgi/layer.json?id=' + i, function(data) {
+      $.getJSON(base_url + '/cgi/layer.json?id=' + i, function(data) {
         ranges = [];
         $.each(data['ranges'], function(i, range) {
           multirange.range_add(range);
@@ -269,22 +324,6 @@ function layers_edit_click(e) {
       });
     }
   });
-}
-
-function range_add() {
-  if (multirange.ranges.length >= settings['range_max']) {
-    alert('Maximum number of ranges reached!');
-    return;
-  }
-  multirange.add();
-}
-
-function range_type_change(e) {
-  if ($(e).val() == 'taper') {
-    $('#range .valuetext').prop('disabled', true);
-  } else {
-    $('#range .valuetext').prop('disabled', false);
-  }
 }
 
 function layers_delete_click(e) {
@@ -303,7 +342,7 @@ function layers_delete_click(e) {
 
         $(this).remove();
         data = {'layer': i};
-        $.post('/cgi/api', '[["layer","remove",' + JSON.stringify(data) + ']]');
+        $.post(base_url + '/cgi/api', '[["layer","remove",' + JSON.stringify(data) + ']]');
         $('#changes').css('display', 'block');
       }
     });
@@ -322,9 +361,25 @@ function layers_new_edit_keydown(e) {
     }
     layers_add(e.value);
     data = {'name': e.value};
-    $.post('/cgi/api', '[["layer","insert",' + JSON.stringify(data) + ']]');
+    $.post(base_url + '/cgi/api', '[["layer","insert",' + JSON.stringify(data) + ']]');
     e.value = '';
     $('#changes').css('display', 'block');
+  }
+}
+
+function range_add() {
+  if (multirange.ranges.length >= settings['range_max']) {
+    alert('Maximum number of ranges reached!');
+    return;
+  }
+  multirange.add();
+}
+
+function range_type_change(e) {
+  if ($(e).val() == 'taper') {
+    $('#range .valuetext').prop('disabled', true);
+  } else {
+    $('#range .valuetext').prop('disabled', false);
   }
 }
 
@@ -335,14 +390,6 @@ function intChangeHandler(e, max) {
   } else if (e.value > max) {
     e.value = max;
   }
-}
-
-function fetch_settings() {
-  $.getJSON('/cgi/settings.json', function(data) {
-    settings = data;
-    $('#layers .new input').attr('maxlength', settings['layer_name_max']);
-    $('#changes').css('display', settings['config_dirty'] ? 'block' : 'none');
-  });
 }
 
 function init() {
@@ -361,20 +408,33 @@ function init() {
         layer += 1;
       }
       data = {'layer': evt.oldIndex, 'to': evt.newIndex};
-      $.post('/cgi/api', '[["layer","move",' + JSON.stringify(data) + ']]');
+      $.post(base_url + '/cgi/api', '[["layer","move",' + JSON.stringify(data) + ']]');
       $('#changes').css('display', 'block');
     }
   });
 
-  fetch_settings();
-
-  $.getJSON('/cgi/layer.json', function(data) {
+  $.getJSON(base_url + '/cgi/layer.json', function(data) {
     $.each(data, function(i, layer) {
       layers_add(layer['name']);
     });
   });
+
+  $.getJSON(base_url + '/cgi/settings.json', function(data) {
+    settings = data;
+    $('#layers .new input').attr('maxlength', settings['layer_name_max']);
+    $('#changes').css('display', settings['config_dirty'] ? 'block' : 'none');
+  });
 }
 $(init);
+
+$(window).unload(function() {
+  $.ajax({
+    type: 'POST',
+    async: false,
+    url: base_url + '/cgi/api',
+    data: '[["layer","update",null]]'
+  });
+});
 </script>
 
 </body>

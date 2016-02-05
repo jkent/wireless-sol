@@ -5,6 +5,7 @@
 #include "led.h"
 #include "layer.h"
 #include "api.h"
+#include "preset.h"
 
 static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 {
@@ -39,16 +40,26 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 		jsontree_write_int(path, LAYER_NAME_MAX);
 		break;
 	case 5:
+		jsontree_write_string(path, "preset_max");
+		path->putchar(':');
+		jsontree_write_int(path, PRESET_MAX);
+		break;
+	case 6:
+		jsontree_write_string(path, "preset_name_max");
+		path->putchar(':');
+		jsontree_write_int(path, PRESET_NAME_MAX);
+		break;
+	case 7:
 		jsontree_write_string(path, "config_dirty");
 		path->putchar(':');
 		jsontree_write_atom(path, config_dirty ? "true" : "false");
 		break;
-	case 6:
+	case 8:
 		jsontree_write_string(path, "needs_layer_update");
 		path->putchar(':');
 		jsontree_write_atom(path, needs_layer_update ? "true" : "false");
 		break;
-	case 7:
+	case 9:
 		jsontree_write_string(path, "needs_led_update");
 		path->putchar(':');
 		jsontree_write_atom(path, needs_led_update ? "true" : "false");
@@ -58,7 +69,7 @@ static int ICACHE_FLASH_ATTR settings_callback(struct jsontree_context *path)
 		return 0;
 	}
 
-	if (path->callback_state < 8) {
+	if (path->callback_state < 10) {
 		path->putchar(',');
 	}
 
@@ -285,3 +296,59 @@ static int ICACHE_FLASH_ATTR layer_background_callback(struct jsontree_context *
 
 const struct jsontree_callback json_layer_background_callback =
 	JSONTREE_CALLBACK(layer_background_callback, NULL);
+
+
+static int ICACHE_FLASH_ATTR preset_callback(struct jsontree_context *path)
+{
+	struct preset *preset;
+	char buf[PRESET_NAME_MAX + 1];
+
+	if (path->callback_state == 0) {
+		path->putchar('[');
+		jsontree_write_atom(path, "{\"name\":\"off\",\"background\":0,\"layers\":0}");
+		if (config_data.preset_count > 0) {
+			path->putchar(',');
+		}
+		path->callback_state++;
+		return 1;
+	}
+
+	if (path->callback_state >= config_data.preset_count + 1) {
+		path->putchar(']');
+		return 0;
+	}
+
+	preset = &config_data.presets[path->callback_state - 1];
+
+	path->putchar('{');
+
+	jsontree_write_string(path, "name");
+	path->putchar(':');
+	strncpy(buf, preset->name, PRESET_NAME_MAX);
+	buf[PRESET_NAME_MAX] = '\0';
+	jsontree_write_string(path, buf);
+
+	path->putchar(',');
+
+	jsontree_write_string(path, "background");
+	path->putchar(':');
+	jsontree_write_int(path, preset->background);
+
+	path->putchar(',');
+
+	jsontree_write_string(path, "layers");
+	path->putchar(':');
+	jsontree_write_int(path, preset->layers);
+
+	path->putchar('}');
+
+	if (path->callback_state < config_data.preset_count) {
+		path->putchar(',');
+	}
+
+	path->callback_state++;
+	return 1;
+}
+
+const struct jsontree_callback json_preset_callback =
+	JSONTREE_CALLBACK(preset_callback, NULL);

@@ -10,6 +10,7 @@
 #include "data.h"
 #include "layer.h"
 #include "json.h"
+#include "preset.h"
 
 //#define SHOW_HEAP_USE
 
@@ -51,41 +52,36 @@ HttpdBuiltInUrl builtInUrls[] = {
 	{ "/cgi/layer.json", cgiJson, &json_layer_callback },
 	{ "/cgi/layer/background.json", cgiJson, &json_layer_background_callback },
 	{ "/cgi/led.json", cgiJson, &json_led_callback },
+	{ "/cgi/preset.json", cgiJson, &json_preset_callback },
 	{ "/cgi/settings.json", cgiJson, &json_settings_callback },
 	{ "*", cgiEspFsHook, NULL },
 	{ NULL }
 };
 
-os_timer_t fade_timer;
+bool off_timeout = false;
+os_timer_t off_timer;
 
-static void ICACHE_FLASH_ATTR fade_timer_cb(void *arg)
+static void ICACHE_FLASH_ATTR off_timer_cb(void *arg)
 {
-	os_timer_arm(&fade_timer, 17, 1);
-
-	if (led_current[0] >= 5) {
-		led_current[0] -= 5;
-	}
-	else {
-		led_current[0] = 0;
-	}
-	memset(led_current, led_current[0], sizeof(led_current));
-	led_update();
+	os_timer_disarm(&off_timer);
+	off_timeout = true;
+	preset_apply(0);
 }
 
 static void ICACHE_FLASH_ATTR button_down(struct button_data *button)
 {
-	os_timer_disarm(&fade_timer);
-	os_timer_setfn(&fade_timer, fade_timer_cb, NULL);
-	os_timer_arm(&fade_timer, 200, 1);
-
-	led_current[0] = 255;
-	memset(led_current, led_current[0], sizeof(led_current));
-	led_update();
+	os_timer_disarm(&off_timer);
+	os_timer_setfn(&off_timer, off_timer_cb, NULL);
+	os_timer_arm(&off_timer, 300, 1);
+	off_timeout = false;
 }
 
 static void ICACHE_FLASH_ATTR button_up(struct button_data *button)
 {
-	os_timer_disarm(&fade_timer);
+	os_timer_disarm(&off_timer);
+	if (!off_timeout) {
+		preset_apply_next();
+	}
 }
 
 void ICACHE_FLASH_ATTR user_init(void)
