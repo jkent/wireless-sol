@@ -142,7 +142,7 @@
       font-weight: bold;
       line-height: 1.5em;
     }
-    #preset_edit .box {
+    #preset_edit form {
       padding: 0.5em;
     }
     #preset_edit label {
@@ -182,12 +182,12 @@
 
 <div id="preset_edit" style="display:none;">
   <div class="heading"></div>
-  <div class="box">
+  <form onsubmit="return false;">
     <label for="background">Background</label><input class="backgroundtext" name="background" type="text" size="3" maxlength="3" onchange="intChangeHandler(this,255)" autocomplete="off" /><br />
     <ul></ul>
-    <button class="previewbtn" onclick="preset_preview()">Preview</button>
     <button class="updatebtn" onclick="preset_update()">Update</button>
-  </div>
+    <button class="previewbtn" onclick="preset_preview()">Preview</button>
+  </form>
 </div>
 
 <script type="text/javascript">

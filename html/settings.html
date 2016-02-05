@@ -109,9 +109,10 @@
   <div class="heading">Settings</div>
   <form onsubmit="return false;">
     <label for="ledcount">LED count</label>
-    <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" onkeydown="ledcount_keydown(this)" autocomplete="off" />
+    <input class="ledcounttext" name="ledcount" type="text" size="4" maxlength="4" onchange="ledcount_change(this)" autocomplete="off" />
     <label for="fadetime">Fade time(ms)</label>
-    <input class="fadetimetext" name="fadetime" type="text" size="4" maxlength="4" onchange="intChangeHandler(this)" onkeydown="fadetime_keydown(this)" autocomplete="off" />
+    <input class="fadetimetext" name="fadetime" type="text" size="4" maxlength="4" onchange="intChangeHandler(this)" autocomplete="off" />
+    <button onclick="settings_update()">Update</button>
   </form>
 </div>
 
@@ -142,26 +143,6 @@ function ledcount_change(e) {
   }
 }
 
-function ledcount_keydown(e) {
-  if(event.keyCode == 13) {
-    ledcount_change(e);
-    data = {'led_count': Number(e.value)};
-    $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
-    $('#changes').css('display', 'block');
-    fetch_settings();
-  }
-}
-
-function fadetime_keydown(e) {
-  if(event.keyCode == 13) {
-    intChangeHandler(e, 1000);
-    data = {'fade_time': Number(e.value)};
-    $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
-    $('#changes').css('display', 'block');
-    fetch_settings();
-  }
-}
-
 function intChangeHandler(e, max) {
   e.value = Number(e.value);
   if (e.value < 0 || e.value == 'NaN') {
@@ -169,6 +150,14 @@ function intChangeHandler(e, max) {
   } else if (e.value > max) {
     e.value = max;
   }
+}
+
+function settings_update() {
+	var led_count = Number($('#settings .ledcounttext').val());
+	var fade_time = Number($('#settings .fadetimetext').val());
+    data = {'led_count': led_count, 'fade_time': fade_time};
+    $.post(base_url + '/cgi/api', '[["settings","set",' + JSON.stringify(data) + ']]');
+    $('#changes').css('display', 'block');
 }
 
 function fetch_settings() {
