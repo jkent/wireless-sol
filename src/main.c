@@ -66,6 +66,7 @@ static void ICACHE_FLASH_ATTR off_timer_cb(void *arg)
 	os_timer_disarm(&off_timer);
 	off_timeout = true;
 	preset_apply(0);
+	status_save();
 }
 
 static void ICACHE_FLASH_ATTR button_down(struct button_data *button)
@@ -81,6 +82,7 @@ static void ICACHE_FLASH_ATTR button_up(struct button_data *button)
 	os_timer_disarm(&off_timer);
 	if (!off_timeout) {
 		preset_apply_next();
+		status_save();
 	}
 }
 

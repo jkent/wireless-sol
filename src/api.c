@@ -223,10 +223,10 @@ static int ICACHE_FLASH_ATTR layer_remove_handler(struct jsonparse_state *state,
 
 	if (was_enabled) {
 		needs_layer_update = true;
+		status_dirty = true;
 	}
 
-    config_dirty = true;
-	status_dirty = true;
+	config_dirty = true;
 	return API_OK;
 }
 
@@ -448,6 +448,7 @@ static int ICACHE_FLASH_ATTR preset_apply_handler(struct jsonparse_state *state,
 		return API_FAIL;
 	}
 
+	status_dirty = true;
 	return API_OK;
 }
 
