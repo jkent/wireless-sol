@@ -1,6 +1,7 @@
 .cproject
 .project
 .settings/
+ldscript_memspecific.ld
 Makefile.local
 build/
 firmware/
