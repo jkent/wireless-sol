@@ -65,6 +65,7 @@ int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
 			json->index[JSONTREE_MAX_DEPTH - 1] = 65535;
 		}
 
+		httpdDisableTransferEncoding(connData);
 		httpdStartResponse(connData, 200);
 		httpdHeader(connData, "Content-Type", "application/json");
 		httpdEndHeaders(connData);
@@ -83,7 +84,7 @@ int ICACHE_FLASH_ATTR cgiJson(HttpdConnData *connData)
 
 int ICACHE_FLASH_ATTR cgiApi(HttpdConnData *connData)
 {
-	struct ApiData *api = (struct ApiData *)connData->cgiPrivData;
+	struct ApiData *api = (struct ApiData *)connData->cgiData;
 	int nbytes, status;
 	char type;
 
@@ -92,6 +93,7 @@ int ICACHE_FLASH_ATTR cgiApi(HttpdConnData *connData)
 	}
 
 	if (connData->requestType != HTTPD_METHOD_POST) {
+		httpdDisableTransferEncoding(connData);
 		httpdStartResponse(connData, 501);
 		httpdHeader(connData, "Content-Type", "text/html");
 		httpdEndHeaders(connData);
@@ -105,7 +107,7 @@ int ICACHE_FLASH_ATTR cgiApi(HttpdConnData *connData)
 		api->depth = 0;
 		api->status = API_OK;
 
-		connData->cgiPrivData = api;
+		connData->cgiData = api;
 	}
 
 	if (api->status < API_OK) {
@@ -187,12 +189,14 @@ finish:
 	}
 
 	if (api->status < API_OK) {
+		httpdDisableTransferEncoding(connData);
 		httpdStartResponse(connData, 500);
 		httpdHeader(connData, "Content-Type", "text/html");
 		httpdEndHeaders(connData);
 		goto done;
 	}
 
+	httpdDisableTransferEncoding(connData);
 	httpdStartResponse(connData, 200);
 	httpdHeader(connData, "Content-Type", "application/json");
 	httpdEndHeaders(connData);
@@ -204,6 +208,6 @@ finish:
 
 done:
 	free(api);
-	connData->cgiPrivData = NULL;
+	connData->cgiData = NULL;
 	return HTTPD_CGI_DONE;
 }

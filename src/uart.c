@@ -1,4 +1,5 @@
 #include <esp8266.h>
+#include "uart.h"
 
 #define UART_TASK_ID 0
 

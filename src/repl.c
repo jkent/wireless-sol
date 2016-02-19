@@ -1,4 +1,5 @@
 #include <esp8266.h>
+#include "uart.h"
 #include "repl.h"
 #include "led.h"
 #include "data.h"
@@ -11,7 +12,7 @@ unsigned char repl_buflen;
 
 static void ICACHE_FLASH_ATTR repl_write_prompt(void)
 {
-	printf("\n> %s", repl_buf);
+	uart0_printf("\n> %s", repl_buf);
 }
 
 void ICACHE_FLASH_ATTR repl_init(void)
@@ -77,12 +78,12 @@ static void ICACHE_FLASH_ATTR repl_command_data_save(char *args)
 
 static void ICACHE_FLASH_ATTR repl_command_help(char *args)
 {
-	printf("\ndata-load");
-	printf("\ndata-save");
-	printf("\nled-set <level>");
-	printf("\nwifi-connect <ssid> [password]");
-	printf("\nwifi-disconnect");
-	printf("\nwifi-status");
+	uart0_printf("\ndata-load");
+	uart0_printf("\ndata-save");
+	uart0_printf("\nled-set <level>");
+	uart0_printf("\nwifi-connect <ssid> [password]");
+	uart0_printf("\nwifi-disconnect");
+	uart0_printf("\nwifi-status");
 }
 
 static void ICACHE_FLASH_ATTR repl_command_led_set(char *args)
@@ -92,7 +93,7 @@ static void ICACHE_FLASH_ATTR repl_command_led_set(char *args)
 	level = repl_parse_args(&args);
 
 	if (!level) {
-		printf("\nlevel is required");
+		uart0_printf("\nlevel is required");
 		return;
 	}
 
@@ -109,7 +110,7 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_connect(char *args)
 	password = repl_parse_args(&args);
 
 	if (!ssid) {
-		printf("\nssid is required");
+		uart0_printf("\nssid is required");
 		return;
 	}
 
@@ -150,27 +151,27 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_status(char *args)
 
 	switch (status) {
 	case STATION_IDLE:
-		printf("\nidle");
+		uart0_printf("\nidle");
 		break;
 	case STATION_CONNECTING:
-		printf("\nconnecting");
+		uart0_printf("\nconnecting");
 		break;
 	case STATION_WRONG_PASSWORD:
-		printf("\nwrong password");
+		uart0_printf("\nwrong password");
 		break;
 	case STATION_NO_AP_FOUND:
-		printf("\nap not found");
+		uart0_printf("\nap not found");
 		break;
 	case STATION_CONNECT_FAIL:
-		printf("\nconnect fail");
+		uart0_printf("\nconnect fail");
 		break;
 	case STATION_GOT_IP:
 		wifi_get_ip_info(STATION_IF, &ip);
 		rssi = wifi_station_get_rssi();
-		printf("\ngot ip " IPSTR ", rssi %d dBm", IP2STR(&ip), rssi);
+		uart0_printf("\ngot ip " IPSTR ", rssi %d dBm", IP2STR(&ip), rssi);
 		break;
 	default:
-		printf("\nunknown");
+		uart0_printf("\nunknown");
 		break;
 	}
 }
@@ -232,7 +233,7 @@ static void ICACHE_FLASH_ATTR repl_process_buf(void)
 	}
 
 	if (strlen(cmd) > 0) {
-		printf("\nunknown command, see help");
+		uart0_printf("\nunknown command, see help");
 	}
 }
 

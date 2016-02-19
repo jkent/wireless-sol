@@ -37,8 +37,8 @@ export USE_OPENSDK
 TARGET		= wireless-sol
 
 # which modules (subdirectories) of the project to include in compiling
-MODULES		= etslib json src
-EXTRA_INCDIR	= libesphttpd/include
+MODULES		= json src
+EXTRA_INCDIR	= include libesphttpd/include
 
 # libraries used in this project, mainly provided by the SDK
 LIBS		= c gcc hal phy pp net80211 lwip crypto wpa main

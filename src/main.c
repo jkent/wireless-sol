@@ -1,4 +1,5 @@
 #include <esp8266.h>
+#include "uart.h"
 #include "repl.h"
 #include "led.h"
 #include "button.h"
@@ -91,7 +92,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 	system_update_cpu_freq(SYS_CPU_160MHZ);
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
 	os_printf("\nstarting up\n");
-	printf("\nWireless Sol");
+	uart0_printf("\nWireless Sol");
 
 	data_init();
 	gpio_init();
