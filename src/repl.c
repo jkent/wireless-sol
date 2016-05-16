@@ -4,6 +4,8 @@
 #include "led.h"
 #include "data.h"
 #include "layer.h"
+#include "util.h"
+#include "wol.h"
 
 #define REPL_MAXBUF 79
 
@@ -84,6 +86,9 @@ static void ICACHE_FLASH_ATTR repl_command_help(char *args)
 	uart0_printf("\nwifi-connect <ssid> [password]");
 	uart0_printf("\nwifi-disconnect");
 	uart0_printf("\nwifi-status");
+	uart0_printf("\nwol-enable [1|0]");
+	uart0_printf("\nwol-mac [mac]");
+	uart0_printf("\nwol-send <mac>");
 }
 
 static void ICACHE_FLASH_ATTR repl_command_led_set(char *args)
@@ -176,6 +181,58 @@ static void ICACHE_FLASH_ATTR repl_command_wifi_status(char *args)
 	}
 }
 
+static void ICACHE_FLASH_ATTR repl_command_wol_enable(char *args)
+{
+	const char *enable;
+
+	enable = repl_parse_args(&args);
+
+	if (!enable) {
+		uart0_printf(config_data.wol_enabled ? "\n1" : "\n0");
+		return;
+	}
+
+	config_data.wol_enabled = !!atoi(enable);
+}
+
+static void ICACHE_FLASH_ATTR repl_command_wol_mac(char *args)
+{
+	char *mac_str;
+	uint8_t mac[6];
+
+	mac_str = repl_parse_args(&args);
+
+	if (!mac_str) {
+		uart0_printf("\n" MACSTR, MAC2STR(config_data.wol_mac));
+		return;
+	}
+
+	if (!parse_mac(mac_str, mac)) {
+		uart0_printf("\nmalformed mac address");
+	}
+
+	memcpy(config_data.wol_mac, mac, 6);
+}
+
+static void ICACHE_FLASH_ATTR repl_command_wol_send(char *args)
+{
+	char *mac_str;
+	uint8_t mac[6];
+
+	mac_str = repl_parse_args(&args);
+
+	if (!mac_str) {
+		uart0_printf("\nmac address required");
+		return;
+	}
+
+	if (!parse_mac(mac_str, mac)) {
+		uart0_printf("\nmalformed mac address");
+	}
+
+	wol_send(mac);
+}
+
 static repl_command commands[] = {
 	{ "data-load", repl_command_data_load },
 	{ "data-save", repl_command_data_save },
@@ -184,6 +241,9 @@ static repl_command commands[] = {
 	{ "wifi-connect", repl_command_wifi_connect },
 	{ "wifi-disconnect", repl_command_wifi_disconnect },
 	{ "wifi-status", repl_command_wifi_status },
+	{ "wol-enable", repl_command_wol_enable },
+	{ "wol-mac", repl_command_wol_mac },
+	{ "wol-send", repl_command_wol_send },
 	{ NULL } };
 
 static void ICACHE_FLASH_ATTR repl_process_buf(void)

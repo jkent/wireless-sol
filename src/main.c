@@ -12,6 +12,7 @@
 #include "layer.h"
 #include "json.h"
 #include "preset.h"
+#include "wol.h"
 
 //#define SHOW_HEAP_USE
 
@@ -84,6 +85,9 @@ static void ICACHE_FLASH_ATTR button_up(struct button_data *button)
 	if (!off_timeout) {
 		preset_apply_next();
 		status_save();
+		if (config_data.wol_enabled) {
+			wol_send(config_data.wol_mac);
+		}
 	}
 }
 
@@ -97,6 +101,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 	data_init();
 	gpio_init();
 	led_init();
+	wol_init();
 
 	button_add(4, button_down, button_up);
 	button_init();

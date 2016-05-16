@@ -1,6 +1,7 @@
 #ifndef DATA_H
 #define DATA_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "layer.h"
 
@@ -26,6 +27,9 @@ struct config_data {
 
 	uint8_t preset_count;
 	struct preset presets[PRESET_MAX];
+
+	bool wol_enabled;
+	uint8_t wol_mac[6];
 
 	uint32_t crc;
 };
